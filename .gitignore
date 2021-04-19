@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# local
+CMakeLists.txt.user
+build/

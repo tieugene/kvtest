@@ -1,19 +1,19 @@
 #include "common.h"
-#include <kcpolydb.h>
+#include <string_view>
+#include <tkrzw_dbm_poly.h>
 
-kyotocabinet::PolyDB db;
+tkrzw::PolyDBM db;
 
 bool DbOpen(void) {
-  return db.open("kvtest.kch", kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE);
+  return db.Open("kvtest.tkh", true, tkrzw::File::OPEN_TRUNCATE) == tkrzw::Status::SUCCESS;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  return db.add((const char *) &k, sizeof(k), (const char *)&v, sizeof(v));
+  return db.Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))) == tkrzw::Status::SUCCESS;
 }
 
 bool RecordGet(const uint160_t &k) {
-  uint32_t v;
-  return db.get((const char *) &k, sizeof(k), (char *)&v, sizeof(v)) == sizeof (v);
+  return db.Get(string_view((const char *) &k, sizeof(k)), nullptr)  == tkrzw::Status::SUCCESS;
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {

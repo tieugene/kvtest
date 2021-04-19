@@ -2,13 +2,24 @@ cmake_minimum_required(VERSION 3.5)
 
 project(kvtest LANGUAGES CXX)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(src)
 
 # Define k-v backends
 find_package(PkgConfig REQUIRED)
+
+# tkrzw
+pkg_search_module(TKRZW IMPORTED_TARGET tkrzw)
+if (TKRZW_FOUND)
+  message(STATUS "Tkrzw: found '${TKRZW_MODULE_NAME}'")
+  add_executable(kvtest_tkrzw src/tkrzw.cpp)
+  target_link_libraries(kvtest_tkrzw PkgConfig::TKRZW)
+  install(TARGETS kvtest_tkrzw RUNTIME DESTINATION bin)
+else (TKRZW_FOUND)
+  message(STATUS "Tkrzw: ---")
+endif(TKRZW_FOUND)
 
 # kyotocabinet
 pkg_search_module(KC IMPORTED_TARGET kyotocabinet)

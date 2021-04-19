@@ -13,6 +13,9 @@ static uint160_t *buffer;
 
 int cli(int argc, char *argv[])
 {
+    /*
+     * Process CLI
+     */
   int retvalue = 0;
   if (argc != 2)
     cerr << "Usage: " << argv[0] << " <pow_of_2>" << endl;
@@ -32,14 +35,17 @@ int cli(int argc, char *argv[])
 
 inline void rand_u160(uint160_t &dst)
 {
-  // generates 20-byte random int
-  // ~10M/s/GHz
+  /* generates 20-byte random int
+   * ~10M/s/GHz
+   */
   for (auto i = 0; i < 5; i++)
     dst[i] = rand();
 }
 
 bool fill_buffer(uint64_t n)
 {
+    /* Fill working buffer with random keys
+     */
   buffer = new uint160_t[n];
   if (!buffer)
     return false;
@@ -55,9 +61,12 @@ int mainloop(
     char *argv[],
     function<bool (void)> func_dbopen,
     function<bool (const uint160_t &, const uint32_t)> func_recadd,
-    function<bool (const uint160_t &)> func_recget
+    function<bool (const uint160_t &)> func_recget,
+    function<int (const uint160_t &, const uint32_t)> func_recgetadd
     )
 {
+    /* Main testing function
+     */
   uint64_t qty, created, found;
   uint160_t k;
 
@@ -100,11 +109,13 @@ int mainloop(
         k = buffer[i];
       else
         rand_u160(k);
-      if (func_recget(k))
-        found++;
-      else
-        if (func_recadd(k, i))
-          created++;
+      auto r = func_recgetadd(k, i);
+      if (r) {
+          if (r == 1)
+              created++;
+          else
+              found++;
+      }
   }
   auto t3 = time(nullptr) - T0;
   cerr << (found+created) << " / " << t3 << " sec. (" << found << " get, " << created << " add)" << endl;
