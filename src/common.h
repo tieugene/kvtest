@@ -42,20 +42,6 @@ inline void rand_u160(uint160_t &dst)
     dst[i] = rand();
 }
 
-bool fill_buffer(uint64_t n)
-{
-    /* Fill working buffer with random keys
-     */
-  buffer = new uint160_t[n];
-  if (!buffer)
-    return false;
-  srand(time(nullptr));
-  uint32_t *ptr = (uint32_t *) buffer;
-  for (uint64_t i = 0; i < n*5; ptr++, i++)
-      *ptr = rand();
-  return true;
-}
-
 int mainloop(
     int argc,
     char *argv[],
@@ -74,25 +60,28 @@ int mainloop(
   if (n < 1)
     return 1;
   qty = 1l << n;
-  if (!fill_buffer(qty))
-    return 2;
+  srand(time(nullptr));
   // go
   if (!func_dbopen()) {
       cerr << "Cannot create db" << endl;
       return 3;
   }
+  uint160_t buffer[qty];
   cerr << "Process " << qty << " records:" << endl;
   // 1. Add samples
-  cerr << "1. Add ....... ";
+  cerr << "1. Add ... ";
   created = 0;
   auto T0 = time(nullptr);
-  for (uint64_t i = 0; i < qty; i++)
+  for (uint64_t i = 0; i < qty; i++) {
+      rand_u160(k);
+      buffer[i] = k;
       if (func_recadd(buffer[i], i))
          created++;
+  }
   auto t1 = time(nullptr) - T0;
   cerr << created << " / " << t1 << " sec." << endl;
   // 2. get
-  cerr << "2. Get ....... ";
+  cerr << "2. Get ... ";
   found = 0;
   T0 = time(nullptr);
   for (uint64_t i = 0; i < qty; i++)
@@ -101,7 +90,7 @@ int mainloop(
   auto t2 = time(nullptr) - T0;
   cerr << found << " / " << t2 << " sec." << endl;
   // 3. get-or-add
-  cerr << "3. Get|Add ... ";
+  cerr << "3. Try ... ";
   created = found = 0;
   T0 = time(nullptr);
   for (uint64_t i = 0; i < qty; i++) {

@@ -1,3 +1,5 @@
+// Tkrzw
+#ifdef TKRZW
 #include "common.h"
 #include <string_view>
 #include <tkrzw_dbm_poly.h>
@@ -31,3 +33,4 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   return mainloop(argc, argv, DbOpen, RecordAdd, RecordGet, RecordGetOrAdd);
 }
+#endif

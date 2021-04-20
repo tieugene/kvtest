@@ -1,3 +1,5 @@
+// Kyotocabinet
+#ifdef KYOTOCABINET
 #include "common.h"
 #include <kcpolydb.h>
 
@@ -31,3 +33,4 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   return mainloop(argc, argv, DbOpen, RecordAdd, RecordGet, RecordGetOrAdd);
 }
+#endif
