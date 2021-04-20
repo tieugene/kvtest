@@ -65,3 +65,18 @@ if (BDB_LIBRARY)
 endif (BDB_LIBRARY)
 message(STATUS "BerkeleyDB: ${BDB_LIBRARY}")
 
+# LMDB
+# Linux pkg ok
+find_library(LMDB_LIBRARY lmdb)
+if (LMDB_LIBRARY)
+    add_definitions(-DLMDB)
+    add_executable(kvtest_mdb src/mdb.cpp)
+    if (APPLE)
+        include_directories(/usr/local/opt/lmdb/include/)
+        target_link_libraries(kvtest_mdb /usr/local/opt/lmdb/lib/liblmdb.dylib)
+    else (APPLE)
+        target_link_libraries(kvtest_mdb lmdb)
+    endif (APPLE)
+    install(TARGETS kvtest_mdb RUNTIME DESTINATION bin)
+endif (LMDB_LIBRARY)
+message(STATUS "LMDB: ${LMDB_LIBRARY}")
