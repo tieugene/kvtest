@@ -47,3 +47,21 @@ if (USE_LDB)
     install(TARGETS kvtest_ldb RUNTIME DESTINATION bin)
 endif(USE_LDB)
 message(STATUS "LevelDB: ${USE_LDB}")
+
+# BerkeleyDB
+# macOS: berkeley-db
+# Linux: libdb-cxx-devel
+find_library(BDB_LIBRARY db)
+if (BDB_LIBRARY)
+    add_definitions(-DBDB)
+    add_executable(kvtest_bdb src/bdb.cpp)
+    if (APPLE)
+        include_directories(/usr/local/opt/berkeley-db/include/)
+        target_link_libraries(kvtest_bdb /usr/local/opt/berkeley-db/lib/libdb_cxx.dylib)
+    else (APPLE)
+        target_link_libraries(kvtest_bdb db)
+    endif (APPLE)
+    install(TARGETS kvtest_bdb RUNTIME DESTINATION bin)
+endif (BDB_LIBRARY)
+message(STATUS "BerkeleyDB: ${BDB_LIBRARY}")
+
