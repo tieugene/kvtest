@@ -1,4 +1,5 @@
 // Tkrzw
+
 #ifdef TKRZW
 #include "common.h"
 #include <string_view>
@@ -7,27 +8,24 @@
 tkrzw::PolyDBM db;
 
 bool DbOpen(void) {
-  return db.Open("kvtest.tkh", true, tkrzw::File::OPEN_TRUNCATE) == tkrzw::Status::SUCCESS;
+  return db.Open("kvtest.tkh", true, tkrzw::File::OPEN_TRUNCATE).IsOK();
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  return db.Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))) == tkrzw::Status::SUCCESS;
+  return db.Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).IsOK();
 }
 
 bool RecordGet(const uint160_t &k) {
-  return db.Get(string_view((const char *) &k, sizeof(k)), nullptr)  == tkrzw::Status::SUCCESS;
+  return db.Get(string_view((const char *) &k, sizeof(k)), nullptr).IsOK();
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
-    /*
-     * Returns:
-     * -1 - found
-     * +1 - added
-     *  0 - not found nor added
-     */
-    if (RecordGet(k))
-        return -1;
-    return int(RecordAdd(k, v));
+  // old way
+  /// return RecordGet(k) ? -1 : int(RecordAdd(k, v));
+  // new way
+  string old_val;
+  auto s = db.Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &old_val);
+  return (s == tkrzw::Status::DUPLICATION_ERROR) ? -1 : int(s.IsOK());
 }
 
 int main(int argc, char *argv[]) {

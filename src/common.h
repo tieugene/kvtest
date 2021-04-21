@@ -60,13 +60,15 @@ int mainloop(
   if (n < 1)
     return 1;
   qty = 1l << n;
+  buffer = new uint160_t[qty];
+  if (!buffer)
+    return 2;
   srand(time(nullptr));
   // go
   if (!func_dbopen()) {
       cerr << "Cannot create db" << endl;
       return 3;
   }
-  uint160_t buffer[qty];
   cerr << "Process " << qty << " records:" << endl;
   // 1. Add samples
   cerr << "1. Add ... ";
@@ -98,7 +100,7 @@ int mainloop(
         k = buffer[i];
       else
         rand_u160(k);
-      auto r = func_recgetadd(k, i);
+      auto r = func_recgetadd(k, i);    // -1 if found, 1 if added, 0 if not found nor added
       if (r) {
           if (r == 1)
               created++;
