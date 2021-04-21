@@ -7,7 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(src)
 find_package(PkgConfig REQUIRED)
 
-#option(USE_KC "Kyotocabinet" ON)
+option(USE_KC "Kyotocabinet" ON)
 option(USE_TK "Tkrzw" ON)
 option(USE_LDB "LevelDB" ON)
 option(USE_BDB "BerkeleyDB" ON)
