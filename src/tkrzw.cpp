@@ -5,10 +5,12 @@
 #include <string_view>
 #include <tkrzw_dbm_poly.h>
 
+const string DBNAME = "kvtest.tkh";
+
 tkrzw::PolyDBM db;
 
 bool DbOpen(void) {
-  return db.Open("kvtest.tkh", true, tkrzw::File::OPEN_TRUNCATE).IsOK();
+  return db.Open(DBNAME, true, tkrzw::File::OPEN_TRUNCATE).IsOK();
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {

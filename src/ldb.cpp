@@ -4,6 +4,8 @@
 #include "common.h"
 #include <leveldb/db.h>
 
+const string DBNAME = "kvtest.ldb";
+
 leveldb::DB *db;
 
 leveldb::Status status;
@@ -14,7 +16,7 @@ bool DbOpen(void) {
   leveldb::Options options;
 
   options.create_if_missing = true;
-  status = leveldb::DB::Open(options, "ldb", &db);
+  status = leveldb::DB::Open(options, DBNAME, &db);
   return status.ok();
 }
 

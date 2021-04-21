@@ -5,6 +5,8 @@
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
 
+const string DBNAME = "kvtest.rdb";
+
 using namespace ROCKSDB_NAMESPACE;
 
 DB* db;
@@ -12,7 +14,7 @@ DB* db;
 bool DbOpen(void) {
   Options options;
   options.create_if_missing = true;
-  return DB::Open(options, "kvtest.rdb", &db).ok();
+  return DB::Open(options, DBNAME, &db).ok();
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {

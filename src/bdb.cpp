@@ -5,11 +5,13 @@
 #include <string_view>
 #include <db_cxx.h>
 
+const string DBNAME = "kvtest.bdb";
+
 Db *db;
 
 bool DbOpen(void) {
   db = new Db(0, 0);
-  return db->open(NULL, "kvtest.bdb", NULL, DB_HASH, DB_CREATE|DB_TRUNCATE, 0) == 0;
+  return db->open(NULL, DBNAME.c_str(), NULL, DB_HASH, DB_CREATE|DB_TRUNCATE, 0) == 0;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
