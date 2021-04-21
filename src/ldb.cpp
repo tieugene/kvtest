@@ -1,6 +1,6 @@
 // LevelDB
 
-#ifdef LEVELDB
+#ifdef USE_LDB
 #include "common.h"
 #include <leveldb/db.h>
 

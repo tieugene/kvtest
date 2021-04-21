@@ -1,6 +1,6 @@
 // Kyotocabinet
 
-#ifdef KYOTOCABINET
+#ifdef USE_KC
 #include "common.h"
 #include <kcpolydb.h>
 

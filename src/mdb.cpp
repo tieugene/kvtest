@@ -1,6 +1,6 @@
 // LMDB
 
-#ifdef LMDB
+#ifdef USE_MDB
 #include "common.h"
 #include <lmdb.h>
 

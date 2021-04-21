@@ -1,6 +1,6 @@
 // Tkrzw
 
-#ifdef TKRZW
+#ifdef USE_TK
 #include "common.h"
 #include <string_view>
 #include <tkrzw_dbm_poly.h>

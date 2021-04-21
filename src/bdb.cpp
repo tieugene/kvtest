@@ -1,6 +1,6 @@
 // BerkeleyDB
 
-#ifdef BDB
+#ifdef USE_BDB
 #include "common.h"
 #include <string_view>
 #include <db_cxx.h>
@@ -8,7 +8,7 @@
 Db *db;
 
 bool DbOpen(void) {
-  db = new Db(NULL, DB_CREATE|DB_TRUNCATE);
+  db = new Db(0, 0);
   return db->open(NULL, "kvtest.bdb", NULL, DB_HASH, DB_CREATE|DB_TRUNCATE, 0) == 0;
 }
 

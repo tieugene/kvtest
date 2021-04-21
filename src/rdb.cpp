@@ -1,6 +1,6 @@
 // RocksDB
 
-#ifdef ROCKSDB
+#ifdef USE_RDB
 #include "common.h"
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
