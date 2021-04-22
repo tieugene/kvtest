@@ -14,11 +14,11 @@ bool DbOpen(void) {
 }
 
 bool DbReOpen(void) {
-  return ((db) and (!db->close()) and (!db->open(DBNAME)));
+  return ((db) and (db->close()) and (db->open(DBNAME, kyotocabinet::PolyDB::OWRITER)));
 }
 
 bool DbClose(void) {
-  return ((db) and (!db->close()));
+  return ((db) and (db->close()));
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
