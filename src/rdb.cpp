@@ -18,13 +18,14 @@ bool DbOpen(void) {
 }
 
 bool DbReOpen(void) {
-  // Mission ipossible?
-  return true;
+  Options options;
+  options.create_if_missing = false;
+  delete db;
+  return DB::Open(options, DBNAME.cbegin(), &db).ok();
 }
 
 bool DbClose(void) {
-  if (db)
-    delete db;
+  delete db;
   return true;
 }
 

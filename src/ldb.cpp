@@ -15,18 +15,18 @@ bool DbOpen(void) {
   leveldb::Options options;
 
   options.create_if_missing = true;
-  status = leveldb::DB::Open(options, DBNAME.cbegin(), &db);
-  return status.ok();
+  return leveldb::DB::Open(options, DBNAME.cbegin(), &db).ok();
 }
 
 bool DbReOpen(void) {
-  // Mission ipossible?
-  return true;
+  leveldb::Options options;
+  options.create_if_missing = false;
+  delete db;
+  return leveldb::DB::Open(options, DBNAME.cbegin(), &db).ok();
 }
 
 bool DbClose(void) {
-  if (db)
-    delete db;
+  delete db;
   return true;
 }
 
