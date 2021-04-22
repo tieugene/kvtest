@@ -1,86 +1,68 @@
 // LMDB
 
 #ifdef USE_MDB
+#include <filesystem>
 #include "common.h"
 #include <lmdb.h>
 
 const string_view DBNAME = "kvtest.mdb";
 
-MDB_env *env;
-MDB_txn *txn;
-MDB_dbi db;
+static MDB_env *env;
+static MDB_txn *txn;
+static MDB_dbi db;
+
+bool debug_msg(int rc, const char *msg)
+{
+  cerr << msg << "error : " << mdb_strerror(rc) << endl;
+  return false;
+}
 
 bool DbOpen(void) {
   int rc;
 
-  rc = mdb_env_create(&env);
-  if(rc) {
-    cerr << "mdb_env_create error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
-  rc = mdb_env_open(env, DBNAME.begin(), 0, 0644);
-  if (rc) {
-    cerr << "mdb_env_open error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
-  rc = mdb_txn_begin(env, NULL, 0, &txn);
-  if (rc) {
-    cerr << "mdb_txn_begin error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
-  rc = mdb_dbi_open(txn, NULL, 0, &db);
-  if (rc) {
-      cerr << "mdb_dbi_open error: " << mdb_strerror(rc) << endl;
+  if (!filesystem::exists(DBNAME))
+    if (!filesystem::create_directory(DBNAME))
       return false;
-  }
-  rc = mdb_txn_commit(txn);
-  if (rc) {
-    cerr << "mdb_txn_commit: " << mdb_strerror(rc) << endl;
-    return false;
-  }
+  if ((rc = mdb_env_create(&env)))
+    return debug_msg(rc, "mdb_env_create");
+  if ((rc = mdb_env_open(env, DBNAME.begin(), 0, 0644)))
+    return debug_msg(rc, "mdb_env_open");
+  if ((rc = mdb_txn_begin(env, nullptr, 0, &txn)))
+    return debug_msg(rc, "mdb_txn_begin");
+  if ((rc = mdb_dbi_open(txn, nullptr, 0, &db)))
+    return debug_msg(rc, "mdb_dbi_open");
+  if ((rc = mdb_txn_commit(txn)))
+    return debug_msg(rc, "mdb_txn_commit");
   return true;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
+  int rc;
   MDB_val key, val;
   key.mv_size = sizeof(k);
   key.mv_data = (void *) &k;
   val.mv_size = sizeof(v);
   val.mv_data = (void *) &v;
-  int rc = mdb_txn_begin(env, NULL, 0, &txn);
-  if (rc) {
-    cerr << "mdb_txn_begin error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
-  rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE);
-  if (rc) {
-    cerr << "mdb_put error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
-  rc = mdb_txn_commit(txn);
-  if (rc) {
-    cerr << "mdb_txn_commit: " << mdb_strerror(rc) << endl;
-    return false;
-  }
+  if ((rc = mdb_txn_begin(env, nullptr, 0, &txn)))
+    return debug_msg(rc, "mdb_txn_begin");
+  if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)))
+    return debug_msg(rc, "mdb_put");
+  if ((rc = mdb_txn_commit(txn)))
+    return debug_msg(rc, "mdb_txn_commit");
   return true;
 }
 
 bool RecordGet(const uint160_t &k) {
+  int rc;
   MDB_val key, val;
   key.mv_size = sizeof(k);
   key.mv_data = (void *) &k;
   bool retvalue = true;
-  int rc = mdb_txn_begin(env, NULL, 0, &txn);
-  if (rc) {
-    cerr << "mdb_txn_begin error: " << mdb_strerror(rc) << endl;
-    return false;
-  }
+  if ((rc = mdb_txn_begin(env, nullptr, 0, &txn)))
+    return debug_msg(rc, "mdb_txn_begin");
   retvalue = (mdb_get(txn, db, &key, &val) == 0);
-  rc = mdb_txn_commit(txn);
-  if (rc) {
-    cerr << "mdb_txn_commit: " << mdb_strerror(rc) << endl;
-    retvalue = false;
-  }
+  if ((rc = mdb_txn_commit(txn)))
+    retvalue = debug_msg(rc, "mdb_txn_commit");
   return retvalue;
 }
 
