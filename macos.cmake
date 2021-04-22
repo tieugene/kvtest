@@ -72,7 +72,7 @@ endif()
 
 # BerkeleyDB (nothing; brew berkeley-db (or not))
 if (USE_BDB)
-    find_library(BDB_LIBRARY db)
+    find_library(BDB_LIBRARY db_cxx /usr/local/opt/berkeley-db@4/lib)
     if (BDB_LIBRARY)
         add_definitions(-DUSE_BDB)
         add_executable(kvtest_bdb src/bdb.cpp)
