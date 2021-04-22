@@ -133,7 +133,7 @@ int mainloop(
   auto ops3 = t3 ? sum/t3 : 0;
   cerr << sum << " / " << t3 << " sec. (" << ops3 << " ops): " << found << " get, " << created << " add" << endl;
   cout << "Time:\t" << t1 << "\t" << t2 << "\t" << t3 << endl;
-  cout << "Kops:\t" << round(ops1/1000.0) << "\t" << round(ops2/1000.0) << "\t" << round(ops3/1000.0) << endl;
+  cout << "Kops:\t" << ops1/1000 << "\t" << ops2/1000 << "\t" << ops3/1000 << endl;
   func_dbclose();
   return 0;
 }
