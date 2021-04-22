@@ -81,7 +81,7 @@ int mainloop(
   }
   cerr << "Process " << RECS_QTY << " records:" << endl;
   // 1. Add samples
-  cerr << "1. Add ... ";
+  cerr << "1. Add " << RECS_QTY << " recs ... ";
   created = 0;
   auto T0 = time(nullptr);
   for (uint64_t i = 0; i < RECS_QTY; i++) {
@@ -98,7 +98,7 @@ int mainloop(
       cerr << "Cannot reopen db #1" << endl;
       return 4;
   }
-  cerr << "2. Get ... ";
+  cerr << "2. Get " << TESTS_QTY << " recs ... ";
   found = 0;
   T0 = time(nullptr);
   for (uint64_t i = 0; i < TESTS_QTY; i++)
@@ -108,11 +108,11 @@ int mainloop(
   auto ops2 = t2 ? found/t2 : 0;
   cerr << found << " / " << t2 << " sec. (" << ops2 << " ops)" << endl;
   // 3. get-or-add
-  cerr << "3. Try ... ";
   if (!func_dbreopen()) {
       cerr << "Cannot reopen db #2" << endl;
       return 5;
   }
+  cerr << "3. Try " << TESTS_QTY << " recs ... ";
   created = found = 0;
   T0 = time(nullptr);
   for (uint64_t i = 0; i < TESTS_QTY; i++) {
@@ -133,7 +133,7 @@ int mainloop(
   auto ops3 = t3 ? sum/t3 : 0;
   cerr << sum << " / " << t3 << " sec. (" << ops3 << " ops): " << found << " get, " << created << " add" << endl;
   cout << "Time:\t" << t1 << "\t" << t2 << "\t" << t3 << endl;
-  cout << "Kops':\t" << round(ops1/1000.0) << "\t" << round(ops2/1000.0) << "\t" << round(ops3/1000.0) << endl;
+  cout << "Kops:\t" << round(ops1/1000.0) << "\t" << round(ops2/1000.0) << "\t" << round(ops3/1000.0) << endl;
   func_dbclose();
   return 0;
 }
