@@ -9,12 +9,23 @@ const string DBNAME = "kvtest.rdb";
 
 using namespace ROCKSDB_NAMESPACE;
 
-DB* db;
+static DB *db = nullptr;
 
 bool DbOpen(void) {
   Options options;
   options.create_if_missing = true;
   return DB::Open(options, DBNAME, &db).ok();
+}
+
+bool DbReOpen(void) {
+  // Mission ipossible?
+  return true;
+}
+
+bool DbClose(void) {
+  if (db)
+    delete db;
+  return true;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -31,6 +42,6 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
 }
 
 int main(int argc, char *argv[]) {
-  return mainloop(argc, argv, DbOpen, RecordAdd, RecordGet, RecordGetOrAdd);
+  return mainloop(argc, argv, DbOpen, DbReOpen, DbClose, RecordAdd, RecordGet, RecordGetOrAdd);
 }
 #endif

@@ -1,5 +1,9 @@
 // LMDB
 
+/* Cost:
+ * 1 record = key+value+8 bytes = 20+4+8 = 32 bytes/rec
+ */
+
 #ifdef USE_MDB
 #include <filesystem>
 #include "common.h"
@@ -33,6 +37,16 @@ bool DbOpen(void) {
     return debug_msg(rc, "mdb_dbi_open");
   if ((rc = mdb_txn_commit(txn)))
     return debug_msg(rc, "mdb_txn_commit");
+  return true;
+}
+
+bool DbReOpen(void) {
+  // dummy
+  return true;
+}
+
+bool DbClose(void) {
+  // dummy
   return true;
 }
 
@@ -71,6 +85,6 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
 }
 
 int main(int argc, char *argv[]) {
-  return mainloop(argc, argv, DbOpen, RecordAdd, RecordGet, RecordGetOrAdd);
+  return mainloop(argc, argv, DbOpen, DbReOpen, DbClose, RecordAdd, RecordGet, RecordGetOrAdd);
 }
 #endif

@@ -15,17 +15,18 @@ int cli(int argc, char *argv[])
 {
     /*
      * Process CLI
+     * Returns: pow of 2 (if ok) or 0 (if err)
      */
   int retvalue = 0;
   if (argc != 2)
-    cerr << "Usage: " << argv[0] << " <pow_of_2>" << endl;
+    cerr << "Usage: " << argv[0] << " <pow_of_2 (1..31)>" << endl;
   else {
       retvalue = atoi(argv[1]);
       if (retvalue < 1)
         cerr << "Bad number: " << argv[1] << endl;
       else {
-        if (retvalue > 32) {
-            cerr << "You want to use " << (1l << retvalue) << " records. Only Duncan MacLeod has enough time to do that." << endl;
+        if (retvalue > 31) {
+            cerr << "number must be <= 31." << endl;
             retvalue = 0;
         }
       }
@@ -46,6 +47,8 @@ int mainloop(
     int argc,
     char *argv[],
     function<bool (void)> func_dbopen,
+    function<bool (void)> func_dbreopen,
+    function<bool (void)> func_dbclose,
     function<bool (const uint160_t &, const uint32_t)> func_recadd,
     function<bool (const uint160_t &)> func_recget,
     function<int (const uint160_t &, const uint32_t)> func_recgetadd
@@ -83,6 +86,10 @@ int mainloop(
   auto t1 = time(nullptr) - T0;
   cerr << created << " / " << t1 << " sec." << endl;
   // 2. get
+  if (!func_dbreopen()) {
+      cerr << "Cannot reopen db #1" << endl;
+      return 4;
+  }
   cerr << "2. Get ... ";
   found = 0;
   T0 = time(nullptr);
@@ -93,6 +100,10 @@ int mainloop(
   cerr << found << " / " << t2 << " sec." << endl;
   // 3. get-or-add
   cerr << "3. Try ... ";
+  if (!func_dbreopen()) {
+      cerr << "Cannot reopen db #2" << endl;
+      return 5;
+  }
   created = found = 0;
   T0 = time(nullptr);
   for (uint64_t i = 0; i < qty; i++) {
@@ -111,6 +122,7 @@ int mainloop(
   auto t3 = time(nullptr) - T0;
   cerr << (found+created) << " / " << t3 << " sec. (" << found << " get, " << created << " add)" << endl;
   cout << t1 << " " << t2 << " " << t3 << endl;
+  func_dbclose();
   return 0;
 }
 

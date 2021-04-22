@@ -6,11 +6,10 @@
 
 const string DBNAME = "kvtest.ldb";
 
-leveldb::DB *db;
-
-leveldb::Status status;
-leveldb::WriteOptions writeOptions;
-leveldb::ReadOptions readOptions;
+static leveldb::DB *db = nullptr;
+static leveldb::Status status;
+static leveldb::WriteOptions writeOptions;
+static leveldb::ReadOptions readOptions;
 
 bool DbOpen(void) {
   leveldb::Options options;
@@ -18,6 +17,17 @@ bool DbOpen(void) {
   options.create_if_missing = true;
   status = leveldb::DB::Open(options, DBNAME, &db);
   return status.ok();
+}
+
+bool DbReOpen(void) {
+  // Mission ipossible?
+  return true;
+}
+
+bool DbClose(void) {
+  if (db)
+    delete db;
+  return true;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -38,6 +48,6 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
 }
 
 int main(int argc, char *argv[]) {
-  return mainloop(argc, argv, DbOpen, RecordAdd, RecordGet, RecordGetOrAdd);
+  return mainloop(argc, argv, DbOpen, DbReOpen, DbClose, RecordAdd, RecordGet, RecordGetOrAdd);
 }
 #endif
