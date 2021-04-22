@@ -7,21 +7,21 @@
 
 const string DBNAME = "kvtest.bdb";
 
-Db *db;
+static Db *db;
 
 bool DbOpen(void) {
-  db = new Db(0, 0);
-  return db->open(NULL, DBNAME.c_str(), NULL, DB_HASH, DB_CREATE|DB_TRUNCATE, 0) == 0;
+  db = new Db(nullptr, 0);
+  return db->open(nullptr, DBNAME.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0) == 0;
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(k)), val((void *) &v, sizeof(v));
-  return db->put(NULL, &key, &val, DB_NOOVERWRITE) == 0;
+  return db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0;
 }
 
 bool RecordGet(const uint160_t &k) {
   Dbt key((void *) &k, sizeof(k)), val;
-  return db->get(NULL, &key, &val, 0) == 0;
+  return db->get(nullptr, &key, &val, 0) == 0;
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
