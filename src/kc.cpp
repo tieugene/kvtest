@@ -4,17 +4,17 @@
 #include "common.h"
 #include <kcpolydb.h>
 
-const string DBNAME = "kvtest.kch";
+const string_view DBNAME("kvtest.kch");
 
 static kyotocabinet::PolyDB *db = nullptr;
 
 bool DbOpen(void) {
   db = new kyotocabinet::PolyDB();
-  return ((db) and (db->open(DBNAME, kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
+  return ((db) and (db->open(DBNAME.cbegin(), kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
 }
 
 bool DbReOpen(void) {
-  return ((db) and (db->close()) and (db->open(DBNAME, kyotocabinet::PolyDB::OWRITER)));
+  return ((db) and (db->close()) and (db->open(DBNAME.cbegin(), kyotocabinet::PolyDB::OWRITER)));
 }
 
 bool DbClose(void) {

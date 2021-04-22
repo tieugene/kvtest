@@ -5,17 +5,17 @@
 #include <string_view>
 #include <tkrzw_dbm_poly.h>
 
-const string DBNAME = "kvtest.tkh";
+const string_view DBNAME("kvtest.tkh");
 
 static tkrzw::PolyDBM *db = nullptr;
 
 bool DbOpen(void) {
   db = new tkrzw::PolyDBM();
-  return ((db) and (db->Open(DBNAME, true, tkrzw::File::OPEN_TRUNCATE).IsOK()));
+  return ((db) and (db->Open(DBNAME.cbegin(), true, tkrzw::File::OPEN_TRUNCATE).IsOK()));
 }
 
 bool DbReOpen(void) {
-  return ((db) and (db->Close().IsOK()) and (db->Open(DBNAME, true).IsOK()));
+  return ((db) and (db->Close().IsOK()) and (db->Open(DBNAME.cbegin(), true).IsOK()));
 }
 
 bool DbClose(void) {
