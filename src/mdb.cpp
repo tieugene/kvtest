@@ -12,8 +12,8 @@
 const string_view DBNAME = "kvtest.mdb";
 
 static MDB_env *env;
-static MDB_txn *txn;
 static MDB_dbi db;
+static MDB_txn *txn;
 
 bool debug_msg(int rc, const char *msg)
 {

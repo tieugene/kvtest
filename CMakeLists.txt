@@ -12,7 +12,7 @@ option(USE_KC "Kyotocabinet" ON)
 option(USE_BDB "BerkeleyDB" ON)
 option(USE_LDB "LevelDB" ON)
 option(USE_RDB "RocksDB" ON)
-option(USE_MDB "LMDB" ON)
+option(USE_MDB "LMDB" OFF)
 
 if (APPLE)
     include(macos.cmake)
