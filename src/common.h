@@ -10,27 +10,36 @@ using namespace std;
 
 typedef array<uint32_t, 5> uint160_t;
 static uint160_t *buffer;
-static uint32_t TESTS_QTY = 1 << 22;
+static uint32_t RECS_QTY = 1 << 20;
+static uint32_t TESTS_QTY = 1 << 20;
 
-int cli(int argc, char *argv[])
+bool cli(int argc, char *argv[])
 {
     /*
      * Process CLI
-     * Returns: pow of 2 (if ok) or 0 (if err)
+     * Returns: success
      */
-  int retvalue = 0;
-  if (argc != 2)
-    cerr << "Usage: " << argv[0] << " <pow_of_2 (1..31)>" << endl;
+  bool retvalue = false;
+
+  if ((argc < 2) or (argc > 3))
+    cerr << "Usage: " << argv[0] << " <log2(records) (0..31)> [log2(tests) (0..31, default 20)]" << endl;
   else {
-      retvalue = atoi(argv[1]);
-      if (retvalue < 1)
-        cerr << "Bad number: " << argv[1] << endl;
-      else {
-        if (retvalue > 31) {
-            cerr << "number must be <= 31." << endl;
-            retvalue = 0;
+    auto i = atoi(argv[1]);
+    if ((i < 1) or (i > 31))
+      cerr << "Bad log2(records): " << argv[1] << endl;
+    else {
+      RECS_QTY = 1 << i;
+      if (argc == 3) {
+        i = atoi(argv[2]);
+        if ((i < 1) or (i > 31))
+          cerr << "Bad log2(tests): " << argv[2] << endl;
+        else {
+          TESTS_QTY = 1 << i;
+          retvalue = true;
         }
-      }
+      } else
+        retvalue = true;
+    }
   }
   return retvalue;
 }
@@ -57,15 +66,12 @@ int mainloop(
 {
     /* Main testing function
      */
-  uint64_t RECS_QTY, created, found;
+  uint32_t created, found;
   uint160_t k;
 
-  auto n = cli(argc, argv);
-  if (n < 1)
+  if (!cli(argc, argv))
     return 1;
-  RECS_QTY = 1l << n;
-  buffer = new uint160_t[RECS_QTY];
-  if (!buffer)
+  if (!(buffer = new uint160_t[RECS_QTY]))
     return 2;
   srand(time(nullptr));
   // go
