@@ -10,6 +10,7 @@ using namespace std;
 
 typedef array<uint32_t, 5> uint160_t;
 static uint160_t *buffer;
+static uint32_t TESTS_QTY = 1 << 22;
 
 int cli(int argc, char *argv[])
 {
@@ -56,14 +57,14 @@ int mainloop(
 {
     /* Main testing function
      */
-  uint64_t qty, created, found;
+  uint64_t RECS_QTY, created, found;
   uint160_t k;
 
   auto n = cli(argc, argv);
   if (n < 1)
     return 1;
-  qty = 1l << n;
-  buffer = new uint160_t[qty];
+  RECS_QTY = 1l << n;
+  buffer = new uint160_t[RECS_QTY];
   if (!buffer)
     return 2;
   srand(time(nullptr));
@@ -72,19 +73,20 @@ int mainloop(
       cerr << "Cannot create db" << endl;
       return 3;
   }
-  cerr << "Process " << qty << " records:" << endl;
+  cerr << "Process " << RECS_QTY << " records:" << endl;
   // 1. Add samples
   cerr << "1. Add ... ";
   created = 0;
   auto T0 = time(nullptr);
-  for (uint64_t i = 0; i < qty; i++) {
+  for (uint64_t i = 0; i < RECS_QTY; i++) {
       rand_u160(k);
       buffer[i] = k;
       if (func_recadd(buffer[i], i))
          created++;
   }
   auto t1 = time(nullptr) - T0;
-  cerr << created << " / " << t1 << " sec." << endl;
+  auto ops1 = t1 ? created/t1 : 0;
+  cerr << created << " / " << t1 << " sec. (" << ops1 << " ops)" << endl;
   // 2. get
   if (!func_dbreopen()) {
       cerr << "Cannot reopen db #1" << endl;
@@ -93,11 +95,12 @@ int mainloop(
   cerr << "2. Get ... ";
   found = 0;
   T0 = time(nullptr);
-  for (uint64_t i = 0; i < qty; i++)
-      if (func_recget(buffer[rand() % qty]))
+  for (uint64_t i = 0; i < TESTS_QTY; i++)
+      if (func_recget(buffer[rand() % RECS_QTY]))
          found++;
   auto t2 = time(nullptr) - T0;
-  cerr << found << " / " << t2 << " sec." << endl;
+  auto ops2 = t2 ? found/t2 : 0;
+  cerr << found << " / " << t2 << " sec. (" << ops2 << " ops)" << endl;
   // 3. get-or-add
   cerr << "3. Try ... ";
   if (!func_dbreopen()) {
@@ -106,9 +109,9 @@ int mainloop(
   }
   created = found = 0;
   T0 = time(nullptr);
-  for (uint64_t i = 0; i < qty; i++) {
+  for (uint64_t i = 0; i < TESTS_QTY; i++) {
       if (i & 1)
-        k = buffer[i];
+        k = buffer[rand() % RECS_QTY];
       else
         rand_u160(k);
       auto r = func_recgetadd(k, i);    // -1 if found, 1 if added, 0 if not found nor added
@@ -120,8 +123,11 @@ int mainloop(
       }
   }
   auto t3 = time(nullptr) - T0;
-  cerr << (found+created) << " / " << t3 << " sec. (" << found << " get, " << created << " add)" << endl;
-  cout << t1 << " " << t2 << " " << t3 << endl;
+  auto sum = found+created;
+  auto ops3 = t3 ? sum/t3 : 0;
+  cerr << sum << " / " << t3 << " sec. (" << ops3 << " ops): " << found << " get, " << created << " add" << endl;
+  cout << "Time:\t" << t1 << "\t" << t2 << "\t" << t3 << endl;
+  cout << "Kops':\t" << round(ops1/1000.0) << "\t" << round(ops2/1000.0) << "\t" << round(ops3/1000.0) << endl;
   func_dbclose();
   return 0;
 }
