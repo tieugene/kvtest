@@ -73,7 +73,7 @@ endif()
 # BerkeleyDB (nothing; libdb-cxx-devel)
 # Linux: libdb-cxx-devel
 if (USE_BDB)
-    #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/CMake/")
+    #set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/")
     #find_package(BerkeleyDB QUIET)
     #if (BerkeleyDB_FOUND)
     find_library(BDB_LIBRARY db_cxx)
