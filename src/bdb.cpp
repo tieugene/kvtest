@@ -35,13 +35,13 @@ bool RecordAdd(const uint160_t &k, const uint32_t v) {
   return db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0;
 }
 
-bool RecordGet(const uint160_t &k) {
+bool RecordGet(const uint160_t &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(k)), val;
-  return db->get(nullptr, &key, &val, 0) == 0;
+  return ((db->get(nullptr, &key, &val, 0) == 0) and (*((uint32_t *) val.get_data()) == v));
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
-    return RecordGet(k) ? -1 : int(RecordAdd(k, v));
+    return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 
 int main(int argc, char *argv[]) {

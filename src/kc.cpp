@@ -25,13 +25,13 @@ bool RecordAdd(const uint160_t &k, const uint32_t v) {
   return db->add((const char *) &k, sizeof(k), (const char *)&v, sizeof(v));
 }
 
-bool RecordGet(const uint160_t &k) {
-  uint32_t v;
-  return db->get((const char *) &k, sizeof(k), (char *)&v, sizeof(v)) == sizeof (v);
+bool RecordGet(const uint160_t &k, const uint32_t v) {
+  uint32_t val;
+  return ((db->get((const char *) &k, sizeof(k), (char *)&val, sizeof(val)) == sizeof (val)) and (val == v));
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
-  return RecordGet(k) ? -1 : int(RecordAdd(k, v));
+  return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 
 int main(int argc, char *argv[]) {
