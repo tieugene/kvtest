@@ -13,6 +13,12 @@ static uint160_t *buffer;
 static uint32_t RECS_QTY = 1 << 20;
 static uint32_t TESTS_QTY = 1 << 20;
 static uint64_t t1, t2, t3, kops1, kops2, kops3;
+static bool test_get = true, test_try = true;
+
+int ret_err(string_view msg, int err) {
+  cerr << msg << endl;
+  return err;
+}
 
 bool cli(int argc, char *argv[])
 {
@@ -125,41 +131,6 @@ void stage_try(function<int (const uint160_t &, const uint32_t)> func_recgetadd)
 
 void out_result(void) {
   cout << "Time(ms)/Kops:\t" << t1 << "\t" << t2 << "\t" << t3 << "\t" << kops1 << "\t" << kops2 << "\t" << kops3 << endl;
-}
-
-int mainloop(
-    int argc,
-    char *argv[],
-    function<bool (void)> func_dbopen,
-    function<bool (void)> func_dbreopen,
-    function<bool (void)> func_dbclose,
-    function<bool (const uint160_t &, const uint32_t)> func_recadd,
-    function<bool (const uint160_t &, const uint32_t)> func_recget,
-    function<int (const uint160_t &, const uint32_t)> func_recgetadd
-    )
-{
-    /* Main testing function
-     */
-  if (!cli(argc, argv))
-    return 1;
-  if (!func_dbopen()) {
-      cerr << "Cannot create db" << endl;
-      return 2;
-  }
-  stage_add(func_recadd);
-  if (!func_dbreopen()) {
-      cerr << "Cannot reopen db #1" << endl;
-      return 3;
-  }
-  stage_get(func_recget);
-  if (!func_dbreopen()) {
-      cerr << "Cannot reopen db #2" << endl;
-      return 4;
-  }
-  stage_try(func_recgetadd);
-  out_result();
-  func_dbclose();
-  return 0;
 }
 
 #endif // COMMON_H
