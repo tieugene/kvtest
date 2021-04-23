@@ -12,6 +12,7 @@ typedef array<uint32_t, 5> uint160_t;
 static uint160_t *buffer;
 static uint32_t RECS_QTY = 1 << 20;
 static uint32_t TESTS_QTY = 1 << 20;
+static uint64_t t1, t2, t3, kops1, kops2, kops3;
 
 bool cli(int argc, char *argv[])
 {
@@ -41,7 +42,7 @@ bool cli(int argc, char *argv[])
         retvalue = true;
     }
   }
-  return retvalue;
+  return (retvalue and (buffer = new uint160_t[RECS_QTY]));
 }
 
 inline void rand_u160(uint160_t &dst)
@@ -57,74 +58,58 @@ uint64_t curtime(void) {
   return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
 }
 
-int mainloop(
-    int argc,
-    char *argv[],
-    function<bool (void)> func_dbopen,
-    function<bool (void)> func_dbreopen,
-    function<bool (void)> func_dbclose,
-    function<bool (const uint160_t &, const uint32_t)> func_recadd,
-    function<bool (const uint160_t &)> func_recget,
-    function<int (const uint160_t &, const uint32_t)> func_recgetadd
-    )
-{
-    /* Main testing function
-     */
-  uint32_t created, found;
+void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
   uint160_t k;
 
-  if (!cli(argc, argv))
-    return 1;
-  if (!(buffer = new uint160_t[RECS_QTY]))
-    return 2;
-  srand(time(nullptr));
-  // go
-  if (!func_dbopen()) {
-      cerr << "Cannot create db" << endl;
-      return 3;
-  }
   cerr << "Process " << RECS_QTY << " records:" << endl;
-  // 1. Add samples
   cerr << "1. Add " << RECS_QTY << " recs ... ";
-  created = 0;
+  auto created = 0;
   auto T0 = curtime();
-  for (uint64_t i = 0; i < RECS_QTY; i++) {
+  for (uint32_t i = 0; i < RECS_QTY; i++) {
       rand_u160(k);
       buffer[i] = k;
       if (func_recadd(buffer[i], i))
          created++;
   }
-  auto t1 = curtime() - T0;
-  auto kops1 = t1 ? created/t1 : 0;
+  t1 = curtime() - T0;
+  kops1 = t1 ? created/t1 : 0;
   cerr << created << " / " << t1 << " ms (" << kops1 << " Kops)" << endl;
-  // 2. get
-  if (!func_dbreopen()) {
-      cerr << "Cannot reopen db #1" << endl;
-      return 4;
-  }
+}
+
+void stage_get(function<bool (const uint160_t &, const uint32_t)> func_recget) {
+  uint160_t k;
+  uint32_t v;
+
   cerr << "2. Get " << TESTS_QTY << " recs ... ";
-  found = 0;
-  T0 = curtime();
-  for (uint64_t i = 0; i < TESTS_QTY; i++)
-      if (func_recget(buffer[rand() % RECS_QTY]))
+  auto found = 0;
+  auto T0 = curtime();
+  for (uint32_t i = 0; i < TESTS_QTY; i++) {
+      v = rand() % RECS_QTY;
+      if (func_recget(buffer[v], v))
          found++;
-  auto t2 = curtime() - T0;
-  auto kops2 = t2 ? found/t2 : 0;
-  cerr << found << " / " << t2 << " ms (" << kops2 << " Kops)" << endl;
-  // 3. get-or-add
-  if (!func_dbreopen()) {
-      cerr << "Cannot reopen db #2" << endl;
-      return 5;
   }
+  t2 = curtime() - T0;
+  kops2 = t2 ? found/t2 : 0;
+  cerr << found << " / " << t2 << " ms (" << kops2 << " Kops)" << endl;
+}
+
+void stage_try(function<int (const uint160_t &, const uint32_t)> func_recgetadd) {
+  uint160_t k;
+  uint32_t v;
+
   cerr << "3. Try " << TESTS_QTY << " recs ... ";
-  created = found = 0;
-  T0 = curtime();
+  auto created = 0;
+  auto found = 0;
+  auto T0 = curtime();
   for (uint64_t i = 0; i < TESTS_QTY; i++) {
-      if (i & 1)
-        k = buffer[rand() % RECS_QTY];
-      else
+      if (i & 1) {
+        v = rand() % RECS_QTY;
+        k = buffer[v];
+      } else {
+        v = RECS_QTY + i;
         rand_u160(k);
-      auto r = func_recgetadd(k, i);    // -1 if found, 1 if added, 0 if not found nor added
+      }
+      auto r = func_recgetadd(k, v);    // -1 if found, 1 if added, 0 if not found nor added
       if (r) {
           if (r == 1)
               created++;
@@ -132,13 +117,47 @@ int mainloop(
               found++;
       }
   }
-  auto t3 = curtime() - T0;
+  t3 = curtime() - T0;
   auto sum = found+created;
-  auto kops3 = t3 ? sum/t3 : 0;
+  kops3 = t3 ? sum/t3 : 0;
   cerr << sum << " / " << t3 << " ms (" << kops3 << " Kops): " << found << " get, " << created << " add" << endl;
-  cout << "Time(ms)/Kops:\t"
-    << t1 << "\t" << t2 << "\t" << t3 << "\t"
-    << kops1 << "\t" << kops2 << "\t" << kops3 << endl;
+}
+
+void out_result(void) {
+  cout << "Time(ms)/Kops:\t" << t1 << "\t" << t2 << "\t" << t3 << "\t" << kops1 << "\t" << kops2 << "\t" << kops3 << endl;
+}
+
+int mainloop(
+    int argc,
+    char *argv[],
+    function<bool (void)> func_dbopen,
+    function<bool (void)> func_dbreopen,
+    function<bool (void)> func_dbclose,
+    function<bool (const uint160_t &, const uint32_t)> func_recadd,
+    function<bool (const uint160_t &, const uint32_t)> func_recget,
+    function<int (const uint160_t &, const uint32_t)> func_recgetadd
+    )
+{
+    /* Main testing function
+     */
+  if (!cli(argc, argv))
+    return 1;
+  if (!func_dbopen()) {
+      cerr << "Cannot create db" << endl;
+      return 2;
+  }
+  stage_add(func_recadd);
+  if (!func_dbreopen()) {
+      cerr << "Cannot reopen db #1" << endl;
+      return 3;
+  }
+  stage_get(func_recget);
+  if (!func_dbreopen()) {
+      cerr << "Cannot reopen db #2" << endl;
+      return 4;
+  }
+  stage_try(func_recgetadd);
+  out_result();
   func_dbclose();
   return 0;
 }

@@ -26,17 +26,18 @@ bool RecordAdd(const uint160_t &k, const uint32_t v) {
   return db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).IsOK();
 }
 
-bool RecordGet(const uint160_t &k) {
-  return db->Get(string_view((const char *) &k, sizeof(k)), nullptr).IsOK();
+bool RecordGet(const uint160_t &k, const uint32_t v) {
+  string val;
+  return (db->Get(string_view((const char *) &k, sizeof(k)), &val).IsOK() and (*((uint32_t *) val.data()) == v));
 }
 
 int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
   // old way
-  /// return RecordGet(k) ? -1 : int(RecordAdd(k, v));
+  /// return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
   // new way
-  string old_val;
-  auto s = db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &old_val);
-  return (s == tkrzw::Status::DUPLICATION_ERROR) ? -1 : int(s.IsOK());
+  string val;
+  auto s = db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &val);
+  return ((s == tkrzw::Status::DUPLICATION_ERROR) and (*((uint32_t *) val.data()) == v)) ? -1 : int(s.IsOK());
 }
 
 int main(int argc, char *argv[]) {
