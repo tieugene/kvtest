@@ -68,6 +68,7 @@ void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
   uint160_t k;
 
   cerr << "1. Add " << RECS_QTY << " recs ... ";
+  srand(time(nullptr));
   auto created = 0;
   auto T0 = curtime();
   for (uint32_t i = 0; i < RECS_QTY; i++) {

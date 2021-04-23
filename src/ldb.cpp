@@ -7,7 +7,6 @@
 const string_view DBNAME("kvtest.ldb");
 
 static leveldb::DB *db = nullptr;
-static leveldb::Status status;
 static leveldb::WriteOptions writeOptions;
 static leveldb::ReadOptions readOptions;
 
@@ -18,8 +17,7 @@ bool db_open(bool create=false) {
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  status = db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v)));
-  return status.ok();
+  return db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v))).ok();
 }
 
 bool RecordGet(const uint160_t &k, const uint32_t v) {
