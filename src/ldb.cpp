@@ -18,15 +18,13 @@ bool db_open(bool create=false) {
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  leveldb::Slice key((const char *) &k, sizeof(k)), val((const char *)&v, sizeof(v));
-  status = db->Put(writeOptions, key, val);
+  status = db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v)));
   return status.ok();
 }
 
 bool RecordGet(const uint160_t &k, const uint32_t v) {
-  leveldb::Slice key((const char *) &k, sizeof(k));
   string val;
-  return (db->Get(readOptions, key, &val).ok() and (*((uint32_t *) val.data()) == v));
+  return (db->Get(readOptions, string((const char *) &k, sizeof(k)), &val).ok() and (*((uint32_t *) val.data()) == v));
 }
 
 int RecordTry(const uint160_t &k, const uint32_t v) {

@@ -11,9 +11,9 @@ using namespace ROCKSDB_NAMESPACE;
 
 static DB *db = nullptr;
 
-bool db_open(void) {
+bool db_open(bool create=false) {
   Options options;
-  options.create_if_missing = true;
+  options.create_if_missing = create;
   // options.unordered_write = true
   return DB::Open(options, DBNAME.cbegin(), &db).ok();
 }
@@ -34,7 +34,7 @@ int RecordTry(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  if (!db_open())
+  if (!db_open(true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   delete db;
