@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
     return ret_err("Cannot sync db", 2);
   if (test_get)
     stage_get(RecordGet);
+  if (test_ask)
+    stage_ask(RecordGet);
   if (test_try) {
     stage_try(RecordTry);
     db->Synchronize(true);

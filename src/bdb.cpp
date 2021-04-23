@@ -38,6 +38,8 @@ int main(int argc, char *argv[]) {
   db->sync(0);
   if (test_get)
     stage_get(RecordGet);
+  if (test_ask)
+    stage_ask(RecordGet);
   if (test_try) {
     stage_try(RecordTry);
     db->sync(0);

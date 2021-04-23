@@ -37,14 +37,18 @@ int main(int argc, char *argv[]) {
   if (!db_open())
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
-  // TODO: db->sync();
-  if (test_get)
-    stage_get(RecordGet);
-  if (test_try) {
-    stage_try(RecordTry);
-    // TODO: db->sync();
-  }
   delete db;
+  if (test_get or test_ask or test_try) {
+    if (!db_open())
+      ret_err("Cannot reopen db", 2);
+    if (test_get)
+      stage_get(RecordGet);
+    if (test_ask)
+      stage_ask(RecordGet);
+    if (test_try)
+      stage_try(RecordTry);
+    delete db;
+  }
   out_result();
   return 0;
 }

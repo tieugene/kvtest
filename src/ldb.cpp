@@ -11,10 +11,9 @@ static leveldb::Status status;
 static leveldb::WriteOptions writeOptions;
 static leveldb::ReadOptions readOptions;
 
-bool db_open(void) {
+bool db_open(bool create=false) {
   leveldb::Options options;
-
-  options.create_if_missing = true;
+  options.create_if_missing = create;
   return leveldb::DB::Open(options, DBNAME.cbegin(), &db).ok();
 }
 
@@ -32,24 +31,29 @@ bool RecordGet(const uint160_t &k, const uint32_t v) {
 
 int RecordTry(const uint160_t &k, const uint32_t v) {
   auto got = RecordGet(k, v);
-  cerr << "Get:" << got << endl;
+  //cerr << "Get:" << got << endl;
   return got ? -1 : int(RecordAdd(k, v));
 }
 
 int main(int argc, char *argv[]) {
+  // TODO: db->sync();
   if (!cli(argc, argv))
     return 1;
-  if (!db_open())
+  if (!db_open(true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
-  // TODO: db->sync();
-  if (test_get)
-    stage_get(RecordGet);
-  if (test_try) {
-    stage_try(RecordTry);
-    // TODO: db->sync();
-  }
   delete db;
+  if (test_get or test_ask or test_try) {
+    if (!db_open())
+      ret_err("Cannot reopen db", 2);
+    if (test_get)
+      stage_get(RecordGet);
+    if (test_ask)
+      stage_ask(RecordGet);
+    if (test_try)
+      stage_try(RecordTry);
+    delete db;
+  }
   out_result();
   return 0;
 }
