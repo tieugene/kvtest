@@ -22,7 +22,7 @@ bool cli(int argc, char *argv[])
   bool retvalue = false;
 
   if ((argc < 2) or (argc > 3))
-    cerr << "Usage: " << argv[0] << " <log2(records) (0..31)> [log2(tests) (0..31, default 20)]" << endl;
+    cerr << "Usage: " << argv[0] << " <log2(records) (0..31)> [log2(tests) (0..31, default=" << TESTS_QTY << ")]" << endl;
   else {
     auto i = atoi(argv[1]);
     if ((i < 1) or (i > 31))
@@ -51,6 +51,10 @@ inline void rand_u160(uint160_t &dst)
    */
   for (auto i = 0; i < 5; i++)
     dst[i] = rand();
+}
+
+uint64_t curtime(void) {
+  return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
 }
 
 int mainloop(
@@ -83,16 +87,16 @@ int mainloop(
   // 1. Add samples
   cerr << "1. Add " << RECS_QTY << " recs ... ";
   created = 0;
-  auto T0 = time(nullptr);
+  auto T0 = curtime();
   for (uint64_t i = 0; i < RECS_QTY; i++) {
       rand_u160(k);
       buffer[i] = k;
       if (func_recadd(buffer[i], i))
          created++;
   }
-  auto t1 = time(nullptr) - T0;
-  auto ops1 = t1 ? created/t1 : 0;
-  cerr << created << " / " << t1 << " sec. (" << ops1 << " ops)" << endl;
+  auto t1 = curtime() - T0;
+  auto kops1 = t1 ? created/t1 : 0;
+  cerr << created << " / " << t1 << " ms (" << kops1 << " Kops)" << endl;
   // 2. get
   if (!func_dbreopen()) {
       cerr << "Cannot reopen db #1" << endl;
@@ -100,13 +104,13 @@ int mainloop(
   }
   cerr << "2. Get " << TESTS_QTY << " recs ... ";
   found = 0;
-  T0 = time(nullptr);
+  T0 = curtime();
   for (uint64_t i = 0; i < TESTS_QTY; i++)
       if (func_recget(buffer[rand() % RECS_QTY]))
          found++;
-  auto t2 = time(nullptr) - T0;
-  auto ops2 = t2 ? found/t2 : 0;
-  cerr << found << " / " << t2 << " sec. (" << ops2 << " ops)" << endl;
+  auto t2 = curtime() - T0;
+  auto kops2 = t2 ? found/t2 : 0;
+  cerr << found << " / " << t2 << " ms (" << kops2 << " Kops)" << endl;
   // 3. get-or-add
   if (!func_dbreopen()) {
       cerr << "Cannot reopen db #2" << endl;
@@ -114,7 +118,7 @@ int mainloop(
   }
   cerr << "3. Try " << TESTS_QTY << " recs ... ";
   created = found = 0;
-  T0 = time(nullptr);
+  T0 = curtime();
   for (uint64_t i = 0; i < TESTS_QTY; i++) {
       if (i & 1)
         k = buffer[rand() % RECS_QTY];
@@ -128,12 +132,13 @@ int mainloop(
               found++;
       }
   }
-  auto t3 = time(nullptr) - T0;
+  auto t3 = curtime() - T0;
   auto sum = found+created;
-  auto ops3 = t3 ? sum/t3 : 0;
-  cerr << sum << " / " << t3 << " sec. (" << ops3 << " ops): " << found << " get, " << created << " add" << endl;
-  cout << "Time:\t" << t1 << "\t" << t2 << "\t" << t3 << endl;
-  cout << "Kops:\t" << ops1/1000 << "\t" << ops2/1000 << "\t" << ops3/1000 << endl;
+  auto kops3 = t3 ? sum/t3 : 0;
+  cerr << sum << " / " << t3 << " ms (" << kops3 << " Kops): " << found << " get, " << created << " add" << endl;
+  cout << "Time(ms)/Kops:\t"
+    << t1 << "\t" << t2 << "\t" << t3 << "\t"
+    << kops1 << "\t" << kops2 << "\t" << kops3 << endl;
   func_dbclose();
   return 0;
 }
