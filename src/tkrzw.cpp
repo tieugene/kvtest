@@ -35,9 +35,9 @@ int RecordGetOrAdd(const uint160_t &k, const uint32_t v) {
   // old way
   /// return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
   // new way
-  string old_val;
-  auto s = db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &old_val);
-  return (s == tkrzw::Status::DUPLICATION_ERROR) ? -1 : int(s.IsOK());
+  string val;
+  auto s = db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &val);
+  return ((s == tkrzw::Status::DUPLICATION_ERROR) and (*((uint32_t *) val.data()) == v)) ? -1 : int(s.IsOK());
 }
 
 int main(int argc, char *argv[]) {
