@@ -114,7 +114,7 @@ bool cli(int argc, char *argv[]) {
 }
 
 /**
- * @brief Get pseud-random key depending on given value
+ * @brief Get pseud-random key depending on given value (~100+M/s/GHz)
  * @param v value that key based on
  * @param dst key storage
  */
