@@ -1,4 +1,6 @@
-// BerkeleyDB
+/*
+ * kvtest. BerkeleyDB backend
+ */
 
 #ifdef USE_BDB
 #include "common.h"
@@ -7,20 +9,26 @@
 #include <iterator>
 #include <db_cxx.h>
 
-const map<string, DBTYPE> exts = {
+const map<string, DBTYPE> exts = {  ///< filename extensions allowable
   {".bdh", DB_HASH},
   {".bdt", DB_BTREE}
 };
 //{".bdq", DB_QUEUE},
 //{".bdr", DB_RECNO},
-const string DBNAME("kvtest.bdh");
+const string DBNAME("kvtest.bdh");  ///< default filename
 const string help = "\
 .bdh: DB_HASH\n\
 .bdt: DB_BTREE\
 ";
 
-static Db *db = nullptr;
+static Db *db = nullptr;            ///< DB handler
 
+/**
+ * @brief Open/create DB
+ * @param name Database filename
+ * @param type Database type
+ * @return true on success
+ */
 bool db_open(const string_view name, const DBTYPE type) {
   // TODO: use DB_UNKNOWN on reopening to detect type
   if (!db)
@@ -28,20 +36,44 @@ bool db_open(const string_view name, const DBTYPE type) {
   return db->open(nullptr, name.cbegin(), nullptr, type, DB_CREATE|DB_TRUNCATE, 0644) == 0;
 }
 
+/**
+ * @brief Add a record to DB callback
+ * @param k key
+ * @param v value
+ * @return true on success
+ */
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(k)), val((void *) &v, sizeof(v));
   return db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0;
 }
 
+/**
+ * @brief Get a record from DB callback
+ * @param k key to search
+ * @param v expected value if found
+ * @return true if found *and* equal to expected
+ */
 bool RecordGet(const uint160_t &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(k)), val;
   return ((db->get(nullptr, &key, &val, 0) == 0) and (*((uint32_t *) val.get_data()) == v));
 }
 
+/**
+ * @brief Get a record or add new callback
+ * @param k key to get (if exists) or add
+ * @param v value to add or expected if key exists
+ * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
+ */
 int RecordTry(const uint160_t &k, const uint32_t v) {
     return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 
+/**
+ * @brief Programm entry point
+ * @param argc command line options number
+ * @param argv command line options strings
+ * @return 0 if OK
+ */
 int main(int argc, char *argv[]) {
   string name = DBNAME;
   DBTYPE type = DB_HASH;

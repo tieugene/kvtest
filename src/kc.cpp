@@ -1,11 +1,13 @@
-// Kyotocabinet
+/*
+ * kvtest. Kyotocabinet backend
+ */
 
 #ifdef USE_KC
 #include "common.h"
 #include <kcpolydb.h>
 
-const set<string> exts = {".kch", ".kct", ".kcd", ".kcf"};
-const string DBNAME("kvtest.kch");
+const set<string> exts = {".kch", ".kct", ".kcd", ".kcf"};  ///< filename extensions allowable
+const string DBNAME("kvtest.kch");    ///< default filename
 const string help = "\
 .kch: HashDB (file hash)\n\
 .kct: TreeDB (file tree)\n\
@@ -13,27 +15,56 @@ const string help = "\
 .kcf: ForestDB (directory tree)\
 ";
 
-static kyotocabinet::PolyDB *db = nullptr;
+static kyotocabinet::PolyDB *db = nullptr;    ///< DB handler
 
+/**
+ * @brief Open/create DB
+ * @param name Database filename
+ * @return true on success
+ */
 bool db_open(const string &name) {
   if (!db)
     db = new kyotocabinet::PolyDB();
   return ((db) and (db->open(name, kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
 }
 
+/**
+ * @brief Add a record to DB callback
+ * @param k key
+ * @param v value
+ * @return true on success
+ */
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
   return db->add((const char *) &k, sizeof(k), (const char *)&v, sizeof(v));
 }
 
+/**
+ * @brief Get a record from DB callback
+ * @param k key to search
+ * @param v expected value if found
+ * @return true if found *and* equal to expected
+ */
 bool RecordGet(const uint160_t &k, const uint32_t v) {
   uint32_t val;
   return ((db->get((const char *) &k, sizeof(k), (char *)&val, sizeof(val)) == sizeof (val)) and (val == v));
 }
 
+/**
+ * @brief Get a record or add new callback
+ * @param k key to get (if exists) or add
+ * @param v value to add or expected if key exists
+ * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
+ */
 int RecordTry(const uint160_t &k, const uint32_t v) {
   return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 
+/**
+ * @brief Programm entry point
+ * @param argc command line options number
+ * @param argv command line options strings
+ * @return 0 if OK
+ */
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
