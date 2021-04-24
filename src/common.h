@@ -1,3 +1,7 @@
+/**
+ * kvtest - common things.
+ */
+
 #ifndef COMMON_H
 #define COMMON_H
 
@@ -9,13 +13,14 @@
 
 using namespace std;
 
-typedef array<uint32_t, 5> uint160_t;
-static uint160_t *buffer;
-static uint32_t RECS_QTY = 1 << 20;
-static uint32_t TESTS_QTY = 1 << 20;
-static uint64_t t1, t2, t3, t4, kops1, kops2, kops3, kops4;
-static bool verbose = false, test_get = true, test_ask = true, test_try = true;
-static string dbname;
+typedef array<uint32_t, 5> uint160_t;   ///< key type (20-bytes uint)
+static uint160_t *buffer;               ///< known keys in-memory storage
+static uint32_t RECS_QTY = 1 << 20;     ///< Records to create in DB
+static uint32_t TESTS_QTY = 1 << 20;    ///< Records to test Get/Ask/Try
+static bool verbose = false;            ///< programm verbosity
+static string dbname;                   ///< database file/dir name
+static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
+static uint64_t t1, t2, t3, t4, kops1, kops2, kops3, kops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
 
 static string_view help_txt = "\
 Usage: [options] log2(records) (0..31))\n\
@@ -27,17 +32,24 @@ Options:\n\
 -v        - verbose\
 ";
 
-int ret_err(string_view msg, int err) {
+/**
+ * @brief Print message to stderr and return errcode
+ * @param msg Message to print
+ * @param err Error code to return
+ * @return Error code given
+ */
+int ret_err(const string_view &msg, const int err) {
   cerr << msg << endl;
   return err;
 }
 
-bool cli(int argc, char *argv[])
-{
-  /*
-   * Process CLI
-   * Returns: success
-   */
+/**
+ * @brief Process command line and reserve memory for testing keys
+ * @param argc arguments number
+ * @param argv arguments strings
+ * @return true on siccess
+ */
+bool cli(int argc, char *argv[]) {
   int opt, i;
 
   while ((opt = getopt(argc, argv, "hvn:t:x:")) != -1) {
@@ -94,17 +106,27 @@ bool cli(int argc, char *argv[])
   return ((buffer = new uint160_t[RECS_QTY]));
 }
 
-inline void rand_u160(uint160_t &dst)
-{
-  /// generates 20-byte random int (~10M/s/GHz)
+/**
+ * @brief generates 20-byte random uint (~10M/s/GHz)
+ * @param dst
+ */
+inline void rand_u160(uint160_t &dst) {
   for (auto i = 0; i < 5; i++)
     dst[i] = rand();
 }
 
+/**
+ * @brief Get current unixtime
+ * @return Current unixtime in milliseconds
+ */
 uint64_t curtime(void) {
   return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
 }
 
+/**
+ * @brief Create DB and add RECS_QTY testing records in it
+ * @param func_recadd Callback to add a record into DB
+ */
 void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
   uint160_t k;
 
@@ -125,6 +147,10 @@ void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
     cerr << created << " / " << t1 << " ms (" << kops1 << " Kops)" << endl;
 }
 
+/**
+ * @brief Test getting TESTS_QTY existing records from DB
+ * @param func_recget Callback to get a record from DB
+ */
 void stage_get(function<bool (const uint160_t &, const uint32_t)> func_recget) {
   uint32_t v;
 
@@ -143,6 +169,10 @@ void stage_get(function<bool (const uint160_t &, const uint32_t)> func_recget) {
     cerr << found << " / " << t2 << " ms (" << kops2 << " Kops)" << endl;
 }
 
+/**
+ * @brief Test getting TESTS_QTY existing/random (50/50) records from DB
+ * @param Callback to get a record from DB
+ */
 void stage_ask(function<bool (const uint160_t &, const uint32_t)> func_recget) {
   uint160_t k;
   uint32_t v;
@@ -168,7 +198,11 @@ void stage_ask(function<bool (const uint160_t &, const uint32_t)> func_recget) {
     cerr << found << " / " << t3 << " ms (" << kops3 << " Kops)" << endl;
 }
 
-void stage_try(function<int (const uint160_t &, const uint32_t)> func_recgetadd) {
+/**
+ * @brief Test getting existing (50%) or adding not existing (50%) TESTS_QTY records in DB
+ * @param Callback to get-or-add a record in DB
+ */
+void stage_try(function<int (const uint160_t &, const uint32_t)> func_rectry) {
   uint160_t k;
   uint32_t v;
 
@@ -185,7 +219,7 @@ void stage_try(function<int (const uint160_t &, const uint32_t)> func_recgetadd)
         v = RECS_QTY + i;
         rand_u160(k);
       }
-      auto r = func_recgetadd(k, v);    // -1 if found, 1 if added, 0 if not found nor added
+      auto r = func_rectry(k, v);    // -1 if found, 1 if added, 0 if not found nor added
       if (r) {
           if (r == 1)
               created++;
@@ -199,10 +233,12 @@ void stage_try(function<int (const uint160_t &, const uint32_t)> func_recgetadd)
     cerr << found+created << " / " << t4 << " ms (" << kops4 << " Kops): " << found << " get, " << created << " add" << endl;
 }
 
+/**
+ * @brief Output test results to stdout
+ */
 void out_result(void) {
   cout << "Time(ms)/Kops:\t"
     << t1 << "\t" << t2 << "\t" << t3 << "\t" << t4 << "\t"
     << kops1 << "\t" << kops2 << "\t" << kops3 << "\t" << kops4 << endl;
 }
-
 #endif // COMMON_H
