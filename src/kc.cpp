@@ -34,8 +34,8 @@ bool db_open(const string &name) {
  * @param v value
  * @return true on success
  */
-bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  return db->add((const char *) &k, sizeof(k), (const char *)&v, sizeof(v));
+bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  return db->add((const char *) &k, sizeof(KEYTYPE_T), (const char *)&v, sizeof(uint32_t));
 }
 
 /**
@@ -44,9 +44,9 @@ bool RecordAdd(const uint160_t &k, const uint32_t v) {
  * @param v expected value if found
  * @return true if found *and* equal to expected
  */
-bool RecordGet(const uint160_t &k, const uint32_t v) {
+bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   uint32_t val;
-  return ((db->get((const char *) &k, sizeof(k), (char *)&val, sizeof(val)) == sizeof (val)) and (val == v));
+  return ((db->get((const char *) &k, sizeof(KEYTYPE_T), (char *)&val, sizeof(uint32_t)) == sizeof (uint32_t)) and (val == v));
 }
 
 /**
@@ -55,7 +55,7 @@ bool RecordGet(const uint160_t &k, const uint32_t v) {
  * @param v value to add or expected if key exists
  * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
  */
-int RecordTry(const uint160_t &k, const uint32_t v) {
+int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
   return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 

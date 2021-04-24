@@ -13,9 +13,10 @@
 
 using namespace std;
 
-typedef array<uint32_t, 5> uint160_t;   ///< key type (20-bytes uint)
-static uint160_t *buffer;               ///< known keys in-memory storage
-static uint32_t RECS_QTY = 1 << 20;     ///< Records to create in DB
+typedef array<uint32_t, 6> KEYTYPE_T;   ///< key type (24-bytes uint)
+static uint32_t *rainbow;               ///< random uint32 numbers
+const int RAINBOW_SIZE = 0x10000;       ///< 64K
+static uint32_t RECS_QTY;               ///< Records to create in DB
 static uint32_t TESTS_QTY = 1 << 20;    ///< Records to test Get/Ask/Try
 static bool verbose = false;            ///< programm verbosity
 static string dbname;                   ///< database file/dir name
@@ -103,16 +104,28 @@ bool cli(int argc, char *argv[]) {
     return false;
   }
   RECS_QTY = 1 << i;
-  return ((buffer = new uint160_t[RECS_QTY]));
+  if (!(rainbow = new uint32_t[RAINBOW_SIZE]))
+    return false;
+  // fill randoms
+  srand(time(nullptr));
+  for (i = 0; i < RAINBOW_SIZE; i++)
+    rainbow[i] = rand();
+  return true;
 }
 
 /**
- * @brief generates 20-byte random uint (~10M/s/GHz)
- * @param dst
+ * @brief Get pseud-random key depending on given value
+ * @param v value that key based on
+ * @param dst key storage
  */
-inline void rand_u160(uint160_t &dst) {
-  for (auto i = 0; i < 5; i++)
-    dst[i] = rand();
+void get_key(const uint32_t v, KEYTYPE_T &dst) {
+  dst[0] = rainbow[v & 0xFFFF];
+  dst[1] = rainbow[v >> 16];
+  dst[2] = v;
+  dst[3] = v ^ 0xFFFFFFFF;
+  dst[4] = rainbow[v >> 16];
+  dst[5] = rainbow[v & 0xFFFF];
+  //dst[0] = dst[1] = dst[2] = dst[3] = dst[4] = dst[5] = v;
 }
 
 /**
@@ -127,18 +140,16 @@ uint64_t curtime(void) {
  * @brief Create DB and add RECS_QTY testing records in it
  * @param func_recadd Callback to add a record into DB
  */
-void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
-  uint160_t k;
+void stage_add(function<bool (const KEYTYPE_T &, const uint32_t)> func_recadd) {
+  KEYTYPE_T k;
 
   if (verbose)
     cerr << "1. Add " << RECS_QTY << " recs ... ";
-  srand(time(nullptr));
   auto created = 0;
   auto T0 = curtime();
-  for (uint32_t i = 0; i < RECS_QTY; i++) {
-      rand_u160(k);
-      buffer[i] = k;
-      if (func_recadd(k, i))
+  for (uint32_t v = 0; v < RECS_QTY; v++) {
+      get_key(v, k);
+      if (func_recadd(k, v))
          created++;
   }
   t1 = curtime() - T0;
@@ -151,16 +162,17 @@ void stage_add(function<bool (const uint160_t &, const uint32_t)> func_recadd) {
  * @brief Test getting TESTS_QTY existing records from DB
  * @param func_recget Callback to get a record from DB
  */
-void stage_get(function<bool (const uint160_t &, const uint32_t)> func_recget) {
-  uint32_t v;
+void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
+  KEYTYPE_T k;
 
   if (verbose)
     cerr << "2. Get " << TESTS_QTY << " recs ... ";
   auto found = 0;
   auto T0 = curtime();
   for (uint32_t i = 0; i < TESTS_QTY; i++) {
-      v = rand() % RECS_QTY;
-      if (func_recget(buffer[v], v))
+      uint32_t v = rand() % RECS_QTY;
+      get_key(v, k);
+      if (func_recget(k, v))
          found++;
   }
   t2 = curtime() - T0;
@@ -173,22 +185,18 @@ void stage_get(function<bool (const uint160_t &, const uint32_t)> func_recget) {
  * @brief Test getting TESTS_QTY existing/random (50/50) records from DB
  * @param Callback to get a record from DB
  */
-void stage_ask(function<bool (const uint160_t &, const uint32_t)> func_recget) {
-  uint160_t k;
-  uint32_t v;
+void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
+  KEYTYPE_T k;
 
   if (verbose)
     cerr << "3. Ask " << TESTS_QTY << " recs ... ";
   auto found = 0;
   auto T0 = curtime();
   for (uint32_t i = 0; i < TESTS_QTY; i++) {
-      if (i & 1) {
-        v = rand() % RECS_QTY;
-        k = buffer[v];
-      } else {
-        v = RECS_QTY + i;
-        rand_u160(k);
-      }
+      uint32_t v = rand() % RECS_QTY;
+      if (i & 1)
+        v += RECS_QTY;
+      get_key(v, k);
       if (func_recget(k, v))
          found++;
   }
@@ -202,23 +210,19 @@ void stage_ask(function<bool (const uint160_t &, const uint32_t)> func_recget) {
  * @brief Test getting existing (50%) or adding not existing (50%) TESTS_QTY records in DB
  * @param Callback to get-or-add a record in DB
  */
-void stage_try(function<int (const uint160_t &, const uint32_t)> func_rectry) {
-  uint160_t k;
-  uint32_t v;
+void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
+  KEYTYPE_T k;
 
   if (verbose)
     cerr << "4. Try " << TESTS_QTY << " recs ... ";
   auto created = 0;
   auto found = 0;
   auto T0 = curtime();
-  for (uint64_t i = 0; i < TESTS_QTY; i++) {
-      if (i & 1) {
-        v = rand() % RECS_QTY;
-        k = buffer[v];
-      } else {
-        v = RECS_QTY + i;
-        rand_u160(k);
-      }
+  for (uint32_t i = 0; i < TESTS_QTY; i++) {
+      uint32_t v = i;   // rand() % RECS_QTY - not works in macOS
+      if (i & 1)
+        v += RECS_QTY;
+      get_key(v, k);
       auto r = func_rectry(k, v);    // -1 if found, 1 if added, 0 if not found nor added
       if (r) {
           if (r == 1)

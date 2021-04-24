@@ -16,16 +16,16 @@ bool db_open(const string &name, bool create=false) {
   return leveldb::DB::Open(options, name, &db).ok();
 }
 
-bool RecordAdd(const uint160_t &k, const uint32_t v) {
+bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   return db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v))).ok();
 }
 
-bool RecordGet(const uint160_t &k, const uint32_t v) {
+bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
   return (db->Get(readOptions, string((const char *) &k, sizeof(k)), &val).ok() and (*((uint32_t *) val.data()) == v));
 }
 
-int RecordTry(const uint160_t &k, const uint32_t v) {
+int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
   auto got = RecordGet(k, v);
   //cerr << "Get:" << got << endl;
   return got ? -1 : int(RecordAdd(k, v));
