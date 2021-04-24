@@ -4,7 +4,7 @@ Key-Value storage test
 
 ## Description
 
-Tools to test popular file-based key-value storages simulating real work - add and read up to 2 billions key-value pairs (20-byte keys, 4-byte values).
+Tools to test popular file-based key-value storages simulating real work - add and read up to 2 billions key-value pairs (20-byte key, 4-byte value).
 
 Test stages:
 
@@ -31,9 +31,9 @@ Backends used:
 Options:
 
 - `-h` - help
-- `-f <path>` - file/dir name of DB/dir\n\
-- `-n n` - log2(number of tests), 1..31 (default=20=>1M)\n\
-- `-x s` - exclude steps (g=Get/a=Ask/t=Try)\n\
+- `-f <path>` - file/dir name of DB
+- `-n n` - log<sub>2</sub>(number of tests), 1..31 (default=20 &rArr; 1M)
+- `-x s` - exclude step (g=Get/a=Ask/t=Try)
 - `-v` - verbose
 
 Mandatory argument `<num>` - power of 2 of records to create (1..31).
@@ -48,6 +48,8 @@ To avoid long RTFM - full example:
 - `-x a -x t` - exclude `Ask` and `Try` stages
 - `-v` - verbose output (show progress)
 - `30` - create 2<sup>30</sup> (1G) records (`Add` stage)
+
+*Note: pay attention to `Try` stage - it creates new 2<sup>n-1</sup> records in addition to `Add` stage.*
 
 ## License
 
