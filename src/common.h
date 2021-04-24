@@ -122,9 +122,9 @@ void get_key(const uint32_t v, KEYTYPE_T &dst) {
   dst[0] = rainbow[v & 0xFFFF];
   dst[1] = rainbow[v >> 16];
   dst[2] = v;
-  dst[3] = v ^ 0xFFFFFFFF;
-  dst[4] = rainbow[v >> 16];
-  dst[5] = rainbow[v & 0xFFFF];
+  dst[3] = ~v;
+  dst[4] = rainbow[(~v) >> 16];
+  dst[5] = rainbow[(~v) & 0xFFFF];
   //dst[0] = dst[1] = dst[2] = dst[3] = dst[4] = dst[5] = v;
 }
 
