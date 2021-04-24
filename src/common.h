@@ -233,7 +233,7 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
       }
   }
   t4 = curtime() - T0;
-  kops4 = t4 ? TESTS_QTY/t3 : 0;
+  kops4 = t4 ? TESTS_QTY/t4 : 0;
   if (verbose)
     cerr << found+created << " / " << t4 << " ms (" << kops4 << " Kops): " << found << " get, " << created << " add" << endl;
 }
