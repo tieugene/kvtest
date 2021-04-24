@@ -26,8 +26,8 @@ static string_view help_txt = "\
 Usage: [options] log2(records) (0..31))\n\
 Options:\n\
 -h        - this help\n\
--n <path> - name of DB file/dir\n\
--t n      - log2(tests), 1..31 (default=20)\n\
+-f <path> - file/dir name of DB/dir\n\
+-n n      - log2(number of tests), 1..31 (default=20=>1M)\n\
 -x (s)    - exclude steps (g=Get/a=Ask/t=Try)\n\
 -v        - verbose\
 ";
@@ -60,15 +60,15 @@ bool cli(int argc, char *argv[]) {
       case 'v':
         verbose = true;
         break;
-      case 't':
+      case 'n':
         i = atoi(optarg);
         if ((i < 1) or (i > 31)) {
-            cerr << "-t must be 1..31" << endl;
+            cerr << "-n must be 1..31" << endl;
             return false;
         }
         TESTS_QTY = 1 << i;
         break;
-      case 'n':   // name
+      case 'f':   // name
         dbname = optarg;
         break;
       case 'x':   // exclude
