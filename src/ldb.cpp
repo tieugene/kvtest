@@ -4,16 +4,16 @@
 #include "common.h"
 #include <leveldb/db.h>
 
-const string_view DBNAME("kvtest.ldb");
+const string DBNAME("kvtest.ldb");
 
 static leveldb::DB *db = nullptr;
 static leveldb::WriteOptions writeOptions;
 static leveldb::ReadOptions readOptions;
 
-bool db_open(bool create=false) {
+bool db_open(const string &name, bool create=false) {
   leveldb::Options options;
   options.create_if_missing = create;
-  return leveldb::DB::Open(options, DBNAME.cbegin(), &db).ok();
+  return leveldb::DB::Open(options, name, &db).ok();
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -35,12 +35,13 @@ int main(int argc, char *argv[]) {
   // TODO: db->sync();
   if (!cli(argc, argv))
     return 1;
-  if (!db_open(true))
+  string name = dbname.empty() ? DBNAME : dbname;
+  if (!db_open(name, true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   delete db;
   if (test_get or test_ask or test_try) {
-    if (!db_open())
+    if (!db_open(name))
       ret_err("Cannot reopen db", 2);
     if (test_get)
       stage_get(RecordGet);

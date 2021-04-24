@@ -4,14 +4,21 @@
 #include "common.h"
 #include <kcpolydb.h>
 
-const string_view DBNAME("kvtest.kch");
+const set<string> exts = {".kch", ".kct", ".kcd", ".kcf"};
+const string DBNAME("kvtest.kch");
+const string help = "\
+.kch: HashDB (file hash)\n\
+.kct: TreeDB (file tree)\n\
+.kcd: DirDB (directory hash)\n\
+.kcf: ForestDB (directory tree)\
+";
 
 static kyotocabinet::PolyDB *db = nullptr;
 
-bool db_open(void) {
+bool db_open(const string &name) {
   if (!db)
     db = new kyotocabinet::PolyDB();
-  return ((db) and (db->open(DBNAME.cbegin(), kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
+  return ((db) and (db->open(name, kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -30,7 +37,14 @@ int RecordTry(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  if (!db_open())
+  string name = DBNAME;
+  if (!dbname.empty()) {
+      auto l = dbname.length();
+      if ((l < 4) or !exts.count(dbname.substr(l - 4)))
+          return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
+      name = dbname;
+  }
+  if (!db_open(name))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   if (!db->synchronize(true))

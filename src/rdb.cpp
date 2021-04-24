@@ -5,17 +5,17 @@
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
 
-const string_view DBNAME("kvtest.rdb");
+const string DBNAME("kvtest.rdb");
 
 using namespace ROCKSDB_NAMESPACE;
 
 static DB *db = nullptr;
 
-bool db_open(bool create=false) {
+bool db_open(const string &name, bool create=false) {
   Options options;
   options.create_if_missing = create;
   // options.unordered_write = true
-  return DB::Open(options, DBNAME.cbegin(), &db).ok();
+  return DB::Open(options, name, &db).ok();
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -34,12 +34,13 @@ int RecordTry(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  if (!db_open(true))
+  string name = dbname.empty() ? DBNAME : dbname;
+  if (!db_open(name, true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   delete db;
   if (test_get or test_ask or test_try) {
-    if (!db_open())
+    if (!db_open(name))
       ret_err("Cannot reopen db", 2);
     if (test_get)
       stage_get(RecordGet);

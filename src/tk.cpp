@@ -3,16 +3,23 @@
 #ifdef USE_TK
 #include "common.h"
 #include <string_view>
+#include <set>
 #include <tkrzw_dbm_poly.h>
 
-const string_view DBNAME("kvtest.tkh");
+const set<string> exts = {".tkh", ".tkt", ".tks"};
+const string DBNAME("kvtest.tkh");
+const string help = "\
+.tkh: HashDBM (file hash)\n\
+.tkt: TreeDBM (file tree)\n\
+.tks: SkipDBM (file ...)\
+";
 
 static tkrzw::PolyDBM *db = nullptr;
 
-bool db_open(void) {
+bool db_open(const string &name) {
   if (!db)
     db = new tkrzw::PolyDBM();
-  return ((db) and db->Open(DBNAME.cbegin(), true, tkrzw::File::OPEN_TRUNCATE).IsOK());
+  return ((db) and db->Open(name, true, tkrzw::File::OPEN_TRUNCATE).IsOK());
 }
 
 bool RecordAdd(const uint160_t &k, const uint32_t v) {
@@ -36,7 +43,14 @@ int RecordTry(const uint160_t &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  if (!db_open())
+  string name = DBNAME;
+  if (!dbname.empty()) {
+      auto l = dbname.length();
+      if ((l < 4) or !exts.count(dbname.substr(l - 4)))
+          return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
+      name = dbname;
+  }
+  if (!db_open(name))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   if (!db->Synchronize(true).IsOK())
