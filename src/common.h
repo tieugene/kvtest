@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <array>
 #include <functional>
+#include <chrono>
 #include <unistd.h>   // getopt
 
 using namespace std;
@@ -133,7 +134,7 @@ void get_key(const uint32_t v, KEYTYPE_T &dst) {
  * @return Current unixtime in milliseconds
  */
 uint64_t curtime(void) {
-  return std::chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
+  return chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
 }
 
 /**
