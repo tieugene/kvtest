@@ -1,5 +1,5 @@
 /*
- * kvtest - Tkrzw backend
+ * kvtest. Tkrzw backend
  */
 
 #ifdef USE_TK
@@ -16,7 +16,7 @@ const string help = "\
 .tks: SkipDBM (file ...)\
 ";
 
-static tkrzw::PolyDBM *db = nullptr;
+static tkrzw::PolyDBM *db = nullptr;    ///< DB handler
 
 /**
  * @brief Open/create DB
@@ -51,10 +51,10 @@ bool RecordGet(const uint160_t &k, const uint32_t v) {
 }
 
 /**
- * @brief Add a new record or get it if exists callback
- * @param k key to add-or-get
+ * @brief Get a record or add new callback
+ * @param k key to get (if exists) or add
  * @param v value to add or expected if key exists
- * @return -1 if key exists *and* value found equal to expected, 1 if kay-value added as new, 0 if not found nor added
+ * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
  */
 int RecordTry(const uint160_t &k, const uint32_t v) {
   // old way
