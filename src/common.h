@@ -52,7 +52,7 @@ int ret_err(const string_view &msg, const int err) {
 bool cli(int argc, char *argv[]) {
   int opt, i;
 
-  while ((opt = getopt(argc, argv, "hvn:t:x:")) != -1) {
+  while ((opt = getopt(argc, argv, "hvf:n:x:")) != -1) {
     switch (opt) {
       case 'h':
         cerr << help_txt << endl;
