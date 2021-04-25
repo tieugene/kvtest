@@ -18,16 +18,16 @@ bool db_open(const string &name, bool create=false) {
   return DB::Open(options, name, &db).ok();
 }
 
-bool RecordAdd(const uint160_t &k, const uint32_t v) {
+bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   return db->Put(WriteOptions(), string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).ok();
 }
 
-bool RecordGet(const uint160_t &k, const uint32_t v) {
+bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
   return (db->Get(ReadOptions(), string_view((const char *) &k, sizeof(k)), &val).ok() and (*((uint32_t *) val.data()) == v));
 }
 
-int RecordTry(const uint160_t &k, const uint32_t v) {
+int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
     return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
 }
 

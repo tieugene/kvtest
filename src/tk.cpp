@@ -35,8 +35,8 @@ bool db_open(const string &name) {
  * @param v value
  * @return true on success
  */
-bool RecordAdd(const uint160_t &k, const uint32_t v) {
-  return db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).IsOK();
+bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  return db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).IsOK();
 }
 
 /**
@@ -45,9 +45,9 @@ bool RecordAdd(const uint160_t &k, const uint32_t v) {
  * @param v expected value if found
  * @return true if found *and* equal to expected
  */
-bool RecordGet(const uint160_t &k, const uint32_t v) {
+bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
-  return (db->Get(string_view((const char *) &k, sizeof(k)), &val).IsOK() and (*((uint32_t *) val.data()) == v));
+  return (db->Get(string_view((const char *) &k, sizeof(KEYTYPE_T)), &val).IsOK() and (*((uint32_t *) val.data()) == v));
 }
 
 /**
@@ -56,12 +56,12 @@ bool RecordGet(const uint160_t &k, const uint32_t v) {
  * @param v value to add or expected if key exists
  * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
  */
-int RecordTry(const uint160_t &k, const uint32_t v) {
+int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
   // old way
   // return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
   // new way
   string val;
-  auto s = db->Set(string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v)), false, &val);
+  auto s = db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t)), false, &val);
   return ((s == tkrzw::Status::DUPLICATION_ERROR) and (*((uint32_t *) val.data()) == v)) ? -1 : int(s.IsOK());
 }
 
