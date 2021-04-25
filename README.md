@@ -32,19 +32,19 @@ Options:
 
 - `-h` - help
 - `-f <path>` - file/dir name of DB
-- `-n n` - log<sub>2</sub>(number of tests), 1..31 (default=20 &rArr; 1M)
-- `-x s` - exclude step (g=Get/a=Ask/t=Try)
+- `-t n` - duration of each test, sec. (1..255, default=5)
+- `-x c` - exclude step (g=Get/a=Ask/t=Try)
 - `-v` - verbose
 
 Mandatory argument `<num>` - power of 2 of records to create (1..31).
 
 To avoid long RTFM - full example:
 
-`kvtest_tk -f test.tkt -n 24 -x a -x t -v 30`
+`kvtest_tk -f test.tkt -t 10 -x a -x t -v 30`
 
 - `kvtest_tk` - Tkrzw engine
 - `-f test.tkt` - TreeDBM file database
-- `-n 24` - test 2<sup>24</sup> (16M) records in each stage (excepting `Add`)
+- `-t 10` - execute each test 10 sec (excepting `Add`)
 - `-x a -x t` - exclude `Ask` and `Try` stages
 - `-v` - verbose output (show progress)
 - `30` - create 2<sup>30</sup> (1G) records (`Add` stage)
