@@ -8,10 +8,12 @@
 #include <iostream>
 #include <cstdlib>
 #include <array>
+#include <filesystem>
 #include <functional>
+#include <cmath>     // round()
 #include <chrono>
 #include <thread>
-#include <unistd.h>   // getopt
+#include <unistd.h>   // getopt()
 
 using namespace std;
 
@@ -158,6 +160,18 @@ const string opsKops(uint32_t ops) {
     return (ops >= 1000) ? to_string(ops/1000) : to_string(ops/1000.0).substr(0, 5);
 }
 
+uint64_t f_size(string_view path) {
+  return filesystem::file_size(path);
+}
+
+uint64_t d_size(string_view path) {
+  uint64_t retvalue = 0;
+  for (filesystem::directory_entry const& entry : filesystem::directory_iterator(path))
+    if (entry.is_regular_file())
+      retvalue += entry.file_size();
+  return retvalue;
+}
+
 /**
  * @brief Get pseud-random key depending on given value (~100+M/s/GHz)
  * @param v value that key based on
@@ -216,7 +230,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   }
   ops2 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops2) << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
 }
 
 /**
@@ -240,7 +254,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   }
   ops3 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops3) << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops)" << endl;
 }
 
 /**
@@ -270,16 +284,16 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   }
   ops4 = all/TEST_DELAY;
   if (verbose)
-    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
+    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
 }
 
 /**
  * @brief Output test results to stdout
  */
 void out_result(uint64_t dbsize=0) {
-  cout << "n=" << int(RECS_POW) << ", t=" << t1/1000 << "s, ";
+  cout << "n = " << int(RECS_POW) << ", t = " << t1/1000 << " s, ";
   if (dbsize)
-    cout << "size=" << round(dbsize/1048576.0) << "MB, ";
+    cout << "size = " << round(dbsize/1048576.0) << " MB, ";
   cout << "Kops:\t" << opsKops(ops1) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H
