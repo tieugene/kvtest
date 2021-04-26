@@ -216,7 +216,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   }
   ops2 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops2) << " Kops)" << endl;
 }
 
 /**
@@ -240,7 +240,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   }
   ops3 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops3) << " Kops)" << endl;
 }
 
 /**
@@ -270,14 +270,16 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   }
   ops4 = all/TEST_DELAY;
   if (verbose)
-    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
+    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << "s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
 }
 
 /**
  * @brief Output test results to stdout
  */
-void out_result(void) {
-  cout << "n=" << int(RECS_POW) << " t=" << t1/1000 << " Kops:\t"
-    << opsKops(ops1) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
+void out_result(uint64_t dbsize=0) {
+  cout << "n=" << int(RECS_POW) << ", t=" << t1/1000 << "s, ";
+  if (dbsize)
+    cout << "size=" << round(dbsize/1048576.0) << "MB, ";
+  cout << "Kops:\t" << opsKops(ops1) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H
