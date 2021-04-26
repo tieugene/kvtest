@@ -197,11 +197,11 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
     uint32_t v = rand() % RECS_QTY;
     get_key(v, k);
     if (func_recget(k, v))
        found++;
+    all++;
   }
   t2 = time_stop();
   kops2 = t2 ? all/t2 : 0;
@@ -222,13 +222,13 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
     uint32_t v = rand() % RECS_QTY;
     if (all & 1)
       v |= 0x80000000;  // or += RECS_QTY;
     get_key(v, k);
     if (func_recget(k, v))
        found++;
+    all++;
   }
   t3 = time_stop();
   kops3 = t3 ? all/t3 : 0;
@@ -241,6 +241,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get-or-add a record in DB
  */
 void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
+  // FIXME: findinf already appended records
   uint32_t all = 0, created = 0, found = 0;
   KEYTYPE_T k;
 
@@ -249,11 +250,9 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
-    // for (uint32_t i = 0; i < TESTS_QTY; i++) {
-    uint32_t v = rand() % RECS_QTY; // works bad in macOS (not 50%)
+    uint32_t v = rand() % RECS_QTY;
     if (all & 1)
-      v |= 0x80000000;  // or += RECS_QTY;
+      v |= 0x80000000;
     get_key(v, k);
     auto r = func_rectry(k, v);    // -1 if found, 1 if added, 0 if not found nor added
     if (r) {
@@ -262,6 +261,7 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
       else
         found++;
     }
+    all++;
   }
   t4 = time_stop();
   kops4 = t4 ? all/t4 : 0;

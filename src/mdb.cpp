@@ -10,17 +10,11 @@
 #include <lmdb.h>
 
 const string DBNAME = "kvtest.mdb";
-const uint64_t MAXMAPSIZE = 0x100000000; // 4GB
+const uint64_t MAXMAPSIZE = 0x1000000000; // 64GB
 
 static MDB_env *env;
 static MDB_dbi db;
 static MDB_txn *txn;
-static uint64_t mapsizes[32] = {
-  1, 1, 1, 1, 1, 257, 2, 2, 2, 2,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-  1, 1
-};
 
 bool debug_msg(int rc, const char *msg)
 {
