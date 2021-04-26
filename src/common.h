@@ -214,6 +214,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get a record from DB
  */
 void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
+  // FIXME: don't repeat unknown keys
   uint32_t all = 0, found = 0;
   KEYTYPE_T k;
 
@@ -241,7 +242,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get-or-add a record in DB
  */
 void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
-  // FIXME: findinf already appended records
+  // FIXME: don't try to find 'unknown' keys that already added
   uint32_t all = 0, created = 0, found = 0;
   KEYTYPE_T k;
 
