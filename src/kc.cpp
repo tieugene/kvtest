@@ -98,6 +98,7 @@ int main(int argc, char *argv[]) {
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;
+  auto dbsize = db->size();
   if (test_get)
     stage_get(RecordGet);
   if (test_ask)
@@ -107,7 +108,7 @@ int main(int argc, char *argv[]) {
     db_sync();
   }
   db->close();
-  out_result();
+  out_result(dbsize);
   return 0;
 }
 #endif
