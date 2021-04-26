@@ -29,6 +29,7 @@ static string dbname;                   ///< database file/dir name
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
 static uint32_t t1, t2, t3, t4, kops1, kops2, kops3, kops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
 static bool can_play = false;
+static chrono::time_point<chrono::steady_clock> T0;
 
 static string_view help_txt = "\
 Usage: [options] <log2(records) (0..31)>\n\
@@ -131,6 +132,21 @@ void lets_play(u_int8_t delay) {
 }
 
 /**
+ * @brief Start timer
+ */
+void time_start(void) {
+  T0 = std::chrono::steady_clock::now();
+}
+
+/**
+ * @brief Get duration from time_start()
+ * @return Milliseconds passed from time_start()
+ */
+uint32_t time_stop(void) {
+  return chrono::duration<float, milli>(chrono::steady_clock::now() - T0).count();
+}
+
+/**
  * @brief Get pseud-random key depending on given value (~100+M/s/GHz)
  * @param v value that key based on
  * @param dst key storage
@@ -156,13 +172,13 @@ void stage_add(function<bool (const KEYTYPE_T &, const uint32_t)> func_recadd) {
   if (verbose)
     cerr << "Playing " << RECS_QTY << " records:" << endl
          << "1. Add ... ";
-  auto start = std::chrono::steady_clock::now();
+  time_start();
   for (uint32_t v = 0; v < RECS_QTY; v++) {
       get_key(v, k);
       if (func_recadd(k, v))
          created++;
   }
-  t1 = chrono::duration<float, milli>(chrono::steady_clock::now() - start).count();
+  t1 = time_stop();
   kops1 = t1 ? RECS_QTY/t1 : 0;
   if (verbose)
     cerr << created << "/" << RECS_QTY << " @ " << t1 << " ms (" << kops1 << " Kops)" << endl;
@@ -178,16 +194,16 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
 
   if (verbose)
     cerr << "2. Get ... ";
-  auto start = std::chrono::steady_clock::now();
+  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
     uint32_t v = rand() % RECS_QTY;
     get_key(v, k);
     if (func_recget(k, v))
        found++;
+    all++;
   }
-  t2 = chrono::duration<float, milli>(chrono::steady_clock::now() - start).count();
+  t2 = time_stop();
   kops2 = t2 ? all/t2 : 0;
   if (verbose)
     cerr << found << "/" << all << " @ " << t2 << " ms (" << kops2 << " Kops)" << endl;
@@ -198,23 +214,24 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get a record from DB
  */
 void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
+  // FIXME: don't repeat unknown keys
   uint32_t all = 0, found = 0;
   KEYTYPE_T k;
 
   if (verbose)
     cerr << "3. Ask ... ";
-  auto start = std::chrono::steady_clock::now();
+  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
     uint32_t v = rand() % RECS_QTY;
     if (all & 1)
-      v += RECS_QTY;
+      v |= 0x80000000;  // or += RECS_QTY;
     get_key(v, k);
     if (func_recget(k, v))
        found++;
+    all++;
   }
-  t3 = chrono::duration<float, milli>(chrono::steady_clock::now() - start).count();
+  t3 = time_stop();
   kops3 = t3 ? all/t3 : 0;
   if (verbose)
     cerr << found << "/" << all << " @ " << t3 << " ms (" << kops3 << " Kops)" << endl;
@@ -225,19 +242,18 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get-or-add a record in DB
  */
 void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
+  // FIXME: don't try to find 'unknown' keys that already added
   uint32_t all = 0, created = 0, found = 0;
   KEYTYPE_T k;
 
   if (verbose)
     cerr << "4. Try ... ";
-  auto start = std::chrono::steady_clock::now();
+  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    all++;
-    // for (uint32_t i = 0; i < TESTS_QTY; i++) {
-    uint32_t v = rand() % RECS_QTY; // works bad in macOS (not 50%)
+    uint32_t v = rand() % RECS_QTY;
     if (all & 1)
-      v += RECS_QTY;
+      v |= 0x80000000;
     get_key(v, k);
     auto r = func_rectry(k, v);    // -1 if found, 1 if added, 0 if not found nor added
     if (r) {
@@ -246,8 +262,9 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
       else
         found++;
     }
+    all++;
   }
-  t4 = chrono::duration<float, milli>(chrono::steady_clock::now() - start).count();
+  t4 = time_stop();
   kops4 = t4 ? all/t4 : 0;
   if (verbose)
     cerr << found+created << "/" << all << " @ " << t4 << " ms (" << kops4 << " Kops): " << found << " get, " << created << " add" << endl;
