@@ -96,6 +96,8 @@ int main(int argc, char *argv[]) {
   string name = DBNAME;
   DBTYPE type = DB_HASH;
   auto search = exts.end();
+  DB_HASH_STAT stat;
+  uint64_t dbsize = 0;
 
   if (!cli(argc, argv))
     return 1;
@@ -112,6 +114,9 @@ int main(int argc, char *argv[]) {
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;
+  if (!db->stat(nullptr, &stat, DB_FAST_STAT))
+    dbsize = stat.hash_pagecnt * stat.hash_pagesize;  // 32766 * 6 <> 20362/40702/... * 4096
+    //db->stat_print(DB_FAST_STAT);
   if (test_get)
     stage_get(RecordGet);
   if (test_ask)
