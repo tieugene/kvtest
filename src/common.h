@@ -27,7 +27,7 @@ static bool verbose = false;            ///< programm verbosity
 static string dbname;                   ///< database file/dir name
 // internal system-wide variables
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
-static uint32_t t1, t2, t3, t4, kops1, kops2, kops3, kops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
+static uint32_t t1, ops1, ops2, ops3, ops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
 static bool can_play = false;
 static chrono::time_point<chrono::steady_clock> T0;
 
@@ -147,6 +147,18 @@ uint32_t time_stop(void) {
 }
 
 /**
+ * @brief Convert Kops into string
+ * @param ops Operations per seconds
+ * @return In representation of Kops or fixed point if Kops < 1
+ */
+const string opsKops(uint32_t ops) {
+  if (ops == 0)
+    return "0";
+  else
+    return (ops >= 1000) ? to_string(ops/1000) : to_string(ops/1000.0).substr(0, 5);
+}
+
+/**
  * @brief Get pseud-random key depending on given value (~100+M/s/GHz)
  * @param v value that key based on
  * @param dst key storage
@@ -179,9 +191,9 @@ void stage_add(function<bool (const KEYTYPE_T &, const uint32_t)> func_recadd) {
          created++;
   }
   t1 = time_stop();
-  kops1 = t1 ? RECS_QTY/t1 : 0;
+  ops1 = t1 >= 1000 ? RECS_QTY/(t1/1000) : 0;
   if (verbose)
-    cerr << created << "/" << RECS_QTY << " @ " << t1 << " ms (" << kops1 << " Kops)" << endl;
+    cerr << created << "/" << RECS_QTY << " @ " << t1 << " ms (" << opsKops(ops1) << " Kops)" << endl;
 }
 
 /**
@@ -194,7 +206,6 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
 
   if (verbose)
     cerr << "2. Get ... ";
-  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
     uint32_t v = rand() % RECS_QTY;
@@ -203,10 +214,9 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
        found++;
     all++;
   }
-  t2 = time_stop();
-  kops2 = t2 ? all/t2 : 0;
+  ops2 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << t2 << " ms (" << kops2 << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
 }
 
 /**
@@ -219,7 +229,6 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
 
   if (verbose)
     cerr << "3. Ask ... ";
-  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
     uint32_t r = rand();
@@ -229,10 +238,9 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
        found++;
     all++;
   }
-  t3 = time_stop();
-  kops3 = t3 ? all/t3 : 0;
+  ops3 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << t3 << " ms (" << kops3 << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops)" << endl;
 }
 
 /**
@@ -246,7 +254,6 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
 
   if (verbose)
     cerr << "4. Try ... ";
-  time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
     uint32_t v = (all & 1) ? rand() % recs_qty : recs_qty;
@@ -261,17 +268,16 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
     }
     all++;
   }
-  t4 = time_stop();
-  kops4 = t4 ? all/t4 : 0;
+  ops4 = all/TEST_DELAY;
   if (verbose)
-    cerr << found+created << "/" << all << " @ " << t4 << " ms (" << kops4 << " Kops): " << found << " get, " << created << " add" << endl;
+    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
 }
 
 /**
  * @brief Output test results to stdout
  */
 void out_result(void) {
-  cout << "N,Time,Kops:\t"
-    << int(RECS_POW) << "\t" << t1 << "\t" << kops1 << "\t" << kops2 << "\t" << kops3 << "\t" << kops4 << endl;
+  cout << "n=" << int(RECS_POW) << " t=" << t1/1000 << " Kops:\t"
+    << opsKops(ops1) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H
