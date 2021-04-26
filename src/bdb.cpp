@@ -37,6 +37,24 @@ bool db_open(const string_view name, const DBTYPE type) {
 }
 
 /**
+ * @brief Flush DB into disk
+ * @return true if Success
+ */
+bool db_sync(void) {
+  if (verbose)
+    cerr << "   Sync ... ";
+  time_start();
+  if (!db->sync(0)) {
+      cerr << "Cannot sync DB" << endl;
+      return false;
+  }
+  auto t = time_stop();
+  if (verbose)
+    cerr << t << " ms" << endl;
+  return true;
+}
+
+/**
  * @brief Add a record to DB callback
  * @param k key
  * @param v value
@@ -92,7 +110,8 @@ int main(int argc, char *argv[]) {
   if (!db_open(name, type))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
-  db->sync(0);
+  if (!db_sync())
+    return 2;
   if (test_get)
     stage_get(RecordGet);
   if (test_ask)
@@ -101,7 +120,7 @@ int main(int argc, char *argv[]) {
     stage_try(RecordTry);
     db->sync(0);
   }
-  db->close(0);
+  db_sync();
   out_result();
   return 0;
 }

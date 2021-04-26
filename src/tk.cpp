@@ -30,6 +30,24 @@ bool db_open(const string &name) {
 }
 
 /**
+ * @brief Flush DB into disk
+ * @return true if Success
+ */
+bool db_sync(void) {
+  if (verbose)
+    cerr << "   Sync ... ";
+  time_start();
+  if (!db->Synchronize(true).IsOK()) {
+      cerr << "Cannot sync DB" << endl;
+      return false;
+  }
+  auto t = time_stop();
+  if (verbose)
+    cerr << t << " ms" << endl;
+  return true;
+}
+
+/**
  * @brief Add a record to DB callback
  * @param k key
  * @param v value
@@ -84,15 +102,15 @@ int main(int argc, char *argv[]) {
   if (!db_open(name))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
-  if (!db->Synchronize(true).IsOK())
-    return ret_err("Cannot sync db", 2);
+  if (!db_sync())
+    return 2;
   if (test_get)
     stage_get(RecordGet);
   if (test_ask)
     stage_ask(RecordGet);
   if (test_try) {
     stage_try(RecordTry);
-    db->Synchronize(true);
+    db_sync();
   }
   db->Close();
   out_result();

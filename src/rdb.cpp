@@ -18,6 +18,21 @@ bool db_open(const string &name, bool create=false) {
   return DB::Open(options, name, &db).ok();
 }
 
+/**
+ * @brief Flush DB into disk
+ * @return true if Success
+ */
+bool db_sync(void) {
+  if (verbose)
+    cerr << "   Sync ... ";
+  time_start();
+  delete db;
+  auto t = time_stop();
+  if (verbose)
+    cerr << t << " ms" << endl;
+  return true;
+}
+
 bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   return db->Put(WriteOptions(), string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).ok();
 }
@@ -38,7 +53,7 @@ int main(int argc, char *argv[]) {
   if (!db_open(name, true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
-  delete db;
+  db_sync();
   if (test_get or test_ask or test_try) {
     if (!db_open(name))
       ret_err("Cannot reopen db", 2);
@@ -48,7 +63,7 @@ int main(int argc, char *argv[]) {
       stage_ask(RecordGet);
     if (test_try)
       stage_try(RecordTry);
-    delete db;
+    db_sync();
   }
   out_result();
   return 0;
