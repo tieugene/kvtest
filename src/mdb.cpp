@@ -120,6 +120,7 @@ int main(int argc, char *argv[]) {
     return 3;
   if (!db_sync())
     return 5;
+  auto dbsize = f_size(name + "/data.mdb");
   if (test_get) {
     if (!tx_open(MDB_RDONLY))
       return 6;
@@ -143,7 +144,7 @@ int main(int argc, char *argv[]) {
     if (!db_sync())
       return 12;
   }
-  out_result();
+  out_result(dbsize);
   return 0;
 }
 #endif

@@ -54,6 +54,7 @@ int main(int argc, char *argv[]) {
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   db_sync();
+  auto dbsize = d_size(name);
   if (test_get or test_ask or test_try) {
     if (!db_open(name))
       ret_err("Cannot reopen db", 2);
@@ -65,7 +66,7 @@ int main(int argc, char *argv[]) {
       stage_try(RecordTry);
     db_sync();
   }
-  out_result();
+  out_result(dbsize);
   return 0;
 }
 #endif
