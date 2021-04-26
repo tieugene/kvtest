@@ -44,7 +44,7 @@ bool db_sync(void) {
   if (verbose)
     cerr << "   Sync ... ";
   time_start();
-  if (!db->sync(0)) {
+  if (db->sync(0)) {
       cerr << "Cannot sync DB" << endl;
       return false;
   }
@@ -118,9 +118,8 @@ int main(int argc, char *argv[]) {
     stage_ask(RecordGet);
   if (test_try) {
     stage_try(RecordTry);
-    db->sync(0);
+    db_sync();
   }
-  db_sync();
   out_result();
   return 0;
 }

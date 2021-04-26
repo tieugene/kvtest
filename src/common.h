@@ -214,8 +214,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  * @param Callback to get a record from DB
  */
 void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
-  // FIXME: don't repeat unknown keys
-  uint32_t all = 0, found = 0;
+  uint32_t all = 0, found = 0, not_recs_qty = ~RECS_QTY;
   KEYTYPE_T k;
 
   if (verbose)
@@ -223,9 +222,8 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    uint32_t v = rand() % RECS_QTY;
-    if (all & 1)
-      v |= 0x80000000;  // or += RECS_QTY;
+    uint32_t r = rand();
+    uint32_t v = (all & 1) ? r % RECS_QTY : (r % not_recs_qty) + RECS_QTY;
     get_key(v, k);
     if (func_recget(k, v))
        found++;
@@ -243,7 +241,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
  */
 void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   // FIXME: don't try to find 'unknown' keys that already added
-  uint32_t all = 0, created = 0, found = 0;
+  uint32_t all = 0, created = 0, found = 0, recs_qty = RECS_QTY;
   KEYTYPE_T k;
 
   if (verbose)
@@ -251,15 +249,14 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   time_start();
   lets_play(TEST_DELAY);
   while (can_play) {
-    uint32_t v = rand() % RECS_QTY;
-    if (all & 1)
-      v |= 0x80000000;
+    uint32_t v = (all & 1) ? rand() % recs_qty : recs_qty;
     get_key(v, k);
     auto r = func_rectry(k, v);    // -1 if found, 1 if added, 0 if not found nor added
     if (r) {
-      if (r == 1)
+      if (r == 1) {
         created++;
-      else
+        recs_qty++;
+      } else
         found++;
     }
     all++;
