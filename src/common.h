@@ -11,7 +11,8 @@
 #include <functional>
 #include <chrono>
 #include <thread>
-#include <unistd.h>   // getopt
+#include <unistd.h>   // getopt()
+#include <math.h>     // round()
 
 using namespace std;
 
