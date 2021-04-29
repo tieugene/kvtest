@@ -42,10 +42,10 @@ bool db_open(const string_view name, const DBTYPE type) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   if (db->sync(0)) {
-      cerr << "Cannot sync DB" << endl;
+      cerr << Err_Cannot_Sync << endl;
       return false;
   }
   auto t = time_stop();
@@ -62,7 +62,10 @@ bool db_sync(void) {
  */
 bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(KEYTYPE_T)), val((void *) &v, sizeof(uint32_t));
-  return db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0;
+  if (db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0)
+    return true;
+  else
+    throw Err_Cannot_Add;
 }
 
 /**
@@ -73,7 +76,18 @@ bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
  */
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(KEYTYPE_T)), val;
-  return ((db->get(nullptr, &key, &val, 0) == 0) and (*((uint32_t *) val.get_data()) == v));
+  auto s = db->get(nullptr, &key, &val, 0);
+  if (s == 0) {
+    if (*((uint32_t *) val.get_data()) == v)
+      return true;
+    else
+      throw Err_Unexpected_Value;
+  }
+  else if (s == DB_NOTFOUND)
+    return false;
+  else
+    throw Err_Cannot_Get;
+
 }
 
 /**

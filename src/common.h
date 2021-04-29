@@ -33,6 +33,13 @@ static uint32_t t1, ops1, ops2, ops3, ops4;     ///< Results: times (ms) and spe
 static bool can_play = false;
 static chrono::time_point<chrono::steady_clock> T0;
 
+const string
+  Err_Cannot_Sync = "Cannot sync DB",
+  Err_Cannot_Add = "Cannot add record",
+  Err_Cannot_Get = "Cannot get record",
+  Err_Unexpected_Value = "Unexpected value found"
+;
+
 static string_view help_txt = "\
 Usage: [options] <log2(records) (0..31)>\n\
 Options:\n\

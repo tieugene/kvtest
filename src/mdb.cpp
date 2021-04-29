@@ -69,7 +69,7 @@ bool db_close() {
 bool db_sync(void) {
   int rc;
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   if ((rc = mdb_env_sync(env, 1)))
     return (!debug_msg(rc, "mdb_sync"));
@@ -86,16 +86,27 @@ bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   key.mv_data = (void *) &k;
   val.mv_size = sizeof(v);
   val.mv_data = (void *) &v;
-  if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)))
-    return debug_msg(rc, "mdb_put");
-  return true;
+  if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)) == 0)
+    return true;
+  else
+    throw mdb_strerror(rc);
 }
 
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
+  int rc;
   MDB_val key, val;
   key.mv_size = sizeof(KEYTYPE_T);
   key.mv_data = (void *) &k;
-  return ((mdb_get(txn, db, &key, &val) == 0) and (*((uint32_t *) val.mv_data) == v));
+  if ((rc = mdb_get(txn, db, &key, &val)) == 0) {
+    if (*((uint32_t *) val.mv_data) == v)
+      return true;
+    else
+      throw Err_Unexpected_Value;
+  }
+  else if (rc == MDB_NOTFOUND)
+    return false;
+  else
+    throw mdb_strerror(rc);
 }
 
 int RecordTry(const KEYTYPE_T &k, const uint32_t v) {

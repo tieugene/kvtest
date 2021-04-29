@@ -38,7 +38,7 @@ bool db_sync(void) {
     cerr << "   Sync... ";
   time_start();
   if (!db->Synchronize(true).IsOK()) {
-      cerr << "Cannot sync DB" << endl;
+      cerr << Err_Cannot_Sync << endl;
       return false;
   }
   auto t = time_stop();
@@ -52,6 +52,7 @@ bool db_sync(void) {
  * @param k key
  * @param v value
  * @return true on success
+ * @throw unknow Something wrong
  */
 bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   return db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).OrDie().IsOK();
@@ -61,7 +62,8 @@ bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
  * @brief Get a record from DB callback
  * @param k key to search
  * @param v expected value if found
- * @return true if found *and* equal to expected
+ * @return true if found *and* equal to expected, false if not found
+ * @throw unknow Something wrong or value found != expected
  */
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
@@ -70,8 +72,9 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return true;
     else
-      throw "Unexpected value found";
-  } else if (status == tkrzw::Status::NOT_FOUND_ERROR)
+      throw Err_Unexpected_Value;
+  }
+  else if (status == tkrzw::Status::NOT_FOUND_ERROR)
     return false;
   else
     throw status.GetMessage();
@@ -82,11 +85,10 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
  * @param k key to get (if exists) or add
  * @param v value to add or expected if key exists
  * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
+ * @return true if add, false if found, exception on error
  */
 int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-  // old way
-  // return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
-  // new way
+  // old way: return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
   string val;
   auto s = db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t)), false, &val);
   if (s.IsOK())
@@ -95,8 +97,9 @@ int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return -1;
     else
-      throw "Unexpected value found";
-  } else
+      throw Err_Unexpected_Value;
+  }
+  else
     throw s.GetMessage();
 }
 
