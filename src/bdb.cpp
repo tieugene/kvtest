@@ -58,13 +58,10 @@ bool db_sync(void) {
  * @brief Add a record to DB callback
  * @param k key
  * @param v value
- * @return true on success
  */
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(KEYTYPE_T)), val((void *) &v, sizeof(uint32_t));
-  if (db->put(nullptr, &key, &val, DB_NOOVERWRITE) == 0)
-    return true;
-  else
+  if (db->put(nullptr, &key, &val, DB_NOOVERWRITE))
     throw Err_Cannot_Add;
 }
 
@@ -94,10 +91,10 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
  * @brief Get a record or add new callback
  * @param k key to get (if exists) or add
  * @param v value to add or expected if key exists
- * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
+ * @return true if found and equal to expected, false if added, exception on error
  */
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-    return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+    return RecordGet(k, v) or (RecordAdd(k, v), false);
 }
 
 /**

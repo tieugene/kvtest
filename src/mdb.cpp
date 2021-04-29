@@ -79,16 +79,14 @@ bool db_sync(void) {
   return true;
 }
 
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   int rc;
   MDB_val key, val;
   key.mv_size = sizeof(KEYTYPE_T);
   key.mv_data = (void *) &k;
   val.mv_size = sizeof(v);
   val.mv_data = (void *) &v;
-  if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)) == 0)
-    return true;
-  else
+  if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)) != 0)
     throw mdb_strerror(rc);
 }
 
@@ -109,8 +107,8 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     throw mdb_strerror(rc);
 }
 
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-    return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+  return RecordGet(k, v) or (RecordAdd(k, v), false);
 }
 
 int main(int argc, char *argv[]) {

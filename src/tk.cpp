@@ -51,11 +51,11 @@ bool db_sync(void) {
  * @brief Add a record to DB callback
  * @param k key
  * @param v value
- * @return true on success
  * @throw unknow Something wrong
  */
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
-  return db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).OrDie().IsOK();
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  if (!db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).IsOK())
+    throw Err_Cannot_Add;
 }
 
 /**
@@ -84,18 +84,17 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
  * @brief Get a record or add new callback
  * @param k key to get (if exists) or add
  * @param v value to add or expected if key exists
- * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
- * @return true if add, false if found, exception on error
+ * @return true if found and equal to expected, false if added, exception on error
  */
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
   // old way: return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
   string val;
   auto s = db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t)), false, &val);
   if (s.IsOK())
-    return 1;
+    return false;
   else if (s == tkrzw::Status::DUPLICATION_ERROR) {
     if (*((uint32_t *) val.data()) == v)
-      return -1;
+      return true;
     else
       throw Err_Unexpected_Value;
   }

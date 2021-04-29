@@ -33,10 +33,8 @@ bool db_sync(void) {
   return true;
 }
 
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
-  if (db->Put(WriteOptions(), string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).ok())
-    return true;
-  else
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  if (!db->Put(WriteOptions(), string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).ok())
     throw Err_Cannot_Add;
 }
 
@@ -55,8 +53,8 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     throw Err_Cannot_Get;
 }
 
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-    return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+  return RecordGet(k, v) or (RecordAdd(k, v), false);
 }
 
 int main(int argc, char *argv[]) {
