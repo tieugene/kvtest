@@ -205,9 +205,9 @@ void stage_add(function<bool (const KEYTYPE_T &, const uint32_t)> func_recadd) {
          created++;
   }
   t1 = time_stop();
-  ops1 = t1 >= 1000 ? RECS_QTY/(t1/1000) : 0;
+  ops1 = t1 >= 0 ? RECS_QTY/t1 : 0;
   if (verbose)
-    cerr << created << "/" << RECS_QTY << " @ " << t1 << " ms (" << opsKops(ops1) << " Kops)" << endl;
+    cerr << created << "/" << RECS_QTY << " @ " << t1 << " ms (" << opsKops(ops1*1000) << " Kops)" << endl;
 }
 
 /**
@@ -294,6 +294,6 @@ void out_result(uint64_t dbsize=0) {
   cout << "n = " << int(RECS_POW) << ", t = " << t1/1000 << " s, ";
   if (dbsize)
     cout << "size = " << round(dbsize/1048576.0) << " MB, ";
-  cout << "Kops:\t" << opsKops(ops1) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
+  cout << "Kops:\t" << opsKops(ops1*1000) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H
