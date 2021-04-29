@@ -35,7 +35,7 @@ bool db_open(const string &name) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   if (!db->Synchronize(true).IsOK()) {
       cerr << "Cannot sync DB" << endl;
@@ -54,7 +54,7 @@ bool db_sync(void) {
  * @return true on success
  */
 bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
-  return db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).IsOK();
+  return db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).OrDie().IsOK();
 }
 
 /**
@@ -65,7 +65,16 @@ bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
  */
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
-  return (db->Get(string_view((const char *) &k, sizeof(KEYTYPE_T)), &val).IsOK() and (*((uint32_t *) val.data()) == v));
+  auto status = db->Get(string_view((const char *) &k, sizeof(KEYTYPE_T)), &val);
+  if (status.IsOK()) {
+    if (*((uint32_t *) val.data()) == v)
+      return true;
+    else
+      throw "Unexpected value found";
+  } else if (status == tkrzw::Status::NOT_FOUND_ERROR)
+    return false;
+  else
+    throw status.GetMessage();
 }
 
 /**
@@ -80,7 +89,15 @@ int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
   // new way
   string val;
   auto s = db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t)), false, &val);
-  return ((s == tkrzw::Status::DUPLICATION_ERROR) and (*((uint32_t *) val.data()) == v)) ? -1 : int(s.IsOK());
+  if (s.IsOK())
+    return 1;
+  else if (s == tkrzw::Status::DUPLICATION_ERROR) {
+    if (*((uint32_t *) val.data()) == v)
+      return -1;
+    else
+      throw "Unexpected value found";
+  } else
+    throw s.GetMessage();
 }
 
 /**

@@ -34,7 +34,7 @@ bool db_open(const string &name) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   if (!db->synchronize(true)) {
       cerr << "Cannot sync DB" << endl;

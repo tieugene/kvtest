@@ -254,7 +254,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   }
   ops3 = all/TEST_DELAY;
   if (verbose)
-    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops)" << endl;
+    cerr << found << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops), " << round(found*100/all) << "% found" << endl;
 }
 
 /**
@@ -284,7 +284,7 @@ void stage_try(function<int (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   }
   ops4 = all/TEST_DELAY;
   if (verbose)
-    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops4) << " Kops): " << found << " get, " << created << " add" << endl;
+    cerr << found+created << "/" << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops4) << " Kops): " << found << " (" << round(found*100/all) << "%) get, " << created << " add" << endl;
 }
 
 /**
