@@ -25,10 +25,9 @@ static tkrzw::PolyDBM *db = nullptr;    ///< DB handler
  * @return true on success
  */
 bool db_open(const string &name) {
-  const map<string, string> tuning_params = {{"offset_width", "5"}};  // {"file", "PositionalParallelFile"}
+  const map<string, string> tuning_params = {{"offset_width", "5"}}; // for very large DB files
   if (!db)
     db = new tkrzw::PolyDBM();
-  //return ((db) and db->Open(name, true, tkrzw::File::OPEN_TRUNCATE).IsOK());
   return ((db) and db->OpenAdvanced(name, true, tkrzw::File::OPEN_TRUNCATE, tuning_params).IsOK());
 }
 
@@ -140,3 +139,4 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 #endif
+
