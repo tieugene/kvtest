@@ -22,7 +22,7 @@ bool db_open(const string &name, bool create=false) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   delete db;
   auto t = time_stop();
@@ -31,19 +31,28 @@ bool db_sync(void) {
   return true;
 }
 
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
-  return db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v))).ok();
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  if (!db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v))).ok())
+    throw Err_Cannot_Add;
 }
 
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   string val;
-  return (db->Get(readOptions, string((const char *) &k, sizeof(k)), &val).ok() and (*((uint32_t *) val.data()) == v));
+  auto s = db->Get(readOptions, string((const char *) &k, sizeof(k)), &val);
+  if (s.ok()) {
+    if (*((uint32_t *) val.data()) == v)
+      return true;
+    else
+      throw Err_Unexpected_Value;
+  }
+  else if (s.IsNotFound())
+    return false;
+  else
+    throw Err_Cannot_Get;
 }
 
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-  auto got = RecordGet(k, v);
-  //cerr << "Get:" << got << endl;
-  return got ? -1 : int(RecordAdd(k, v));
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+  return RecordGet(k, v) or (RecordAdd(k, v), false);
 }
 
 int main(int argc, char *argv[]) {

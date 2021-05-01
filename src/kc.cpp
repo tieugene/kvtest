@@ -34,7 +34,7 @@ bool db_open(const string &name) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync ... ";
+    cerr << "   Sync... ";
   time_start();
   if (!db->synchronize(true)) {
       cerr << "Cannot sync DB" << endl;
@@ -50,10 +50,10 @@ bool db_sync(void) {
  * @brief Add a record to DB callback
  * @param k key
  * @param v value
- * @return true on success
  */
-bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
-  return db->add((const char *) &k, sizeof(KEYTYPE_T), (const char *)&v, sizeof(uint32_t));
+void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
+  if (!db->add((const char *) &k, sizeof(KEYTYPE_T), (const char *)&v, sizeof(uint32_t)))
+    throw Err_Cannot_Add;
 }
 
 /**
@@ -64,7 +64,17 @@ bool RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
  */
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
   uint32_t val;
-  return ((db->get((const char *) &k, sizeof(KEYTYPE_T), (char *)&val, sizeof(uint32_t)) == sizeof (uint32_t)) and (val == v));
+  auto s = db->get((const char *) &k, sizeof(KEYTYPE_T), (char *)&val, sizeof(uint32_t));
+  if (s == sizeof (uint32_t)) {
+    if (val == v)
+      return true;
+    else
+      throw Err_Unexpected_Value;
+  }
+  else if (s == -1)
+    return false;
+  else
+    throw Err_Cannot_Get;
 }
 
 /**
@@ -72,9 +82,10 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
  * @param k key to get (if exists) or add
  * @param v value to add or expected if key exists
  * @return -1 if key exists *and* value found equal to expected, 1 if key-value added as new, 0 if not found nor added
+ * @return true if found and equal to expected, false if added, exception on error
  */
-int RecordTry(const KEYTYPE_T &k, const uint32_t v) {
-  return RecordGet(k, v) ? -1 : int(RecordAdd(k, v));
+bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
+  return RecordGet(k, v) or (RecordAdd(k, v), false);
 }
 
 /**
