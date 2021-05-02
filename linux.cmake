@@ -41,18 +41,11 @@ endif()
 
 # RocksDB (pkg-config; rocksdb-devel)
 if (USE_RDB)
-    # pkg-config
-    #pkg_search_module(RDB IMPORTED_TARGET rocksdb)
-    #if (RDB_FOUND)
-    # cmake
-    find_package(RocksDB CONFIG REQUIRED)
-    if (RocksDB_FOUND)
+    pkg_search_module(RDB IMPORTED_TARGET rocksdb)
+    if (RDB_FOUND)
         add_definitions(-DUSE_RDB)
         add_executable(kvtest_rdb src/rdb.cpp)
-        # pkg-config
-        #target_link_libraries(kvtest_rdb PkgConfig::RDB)
-        # cmake
-        target_link_libraries(kvtest_rdb rocksdb)
+        target_link_libraries(kvtest_rdb PkgConfig::RDB)
         target_link_libraries(kvtest_rdb pthread)
         install(TARGETS kvtest_rdb RUNTIME DESTINATION bin)
     else()
