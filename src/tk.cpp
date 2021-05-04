@@ -10,7 +10,7 @@
 #include <tkrzw_dbm_poly.h>
 
 const set<string> exts = {".tkh", ".tkt", ".tks"};  ///< filename extensions allowable
-const string DBNAME("kvtest.tkh");                  ///< default filename
+const filesystem::path DBNAME("kvtest.tkh");        ///< default filename
 const string help = "\
 .tkh: HashDBM (file hash)\n\
 .tkt: TreeDBM (file tree)\n\
@@ -24,7 +24,7 @@ static tkrzw::PolyDBM *db = nullptr;    ///< DB handler
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const string &name) {
+bool db_open(const filesystem::path &name) {
   const map<string, string> tuning_params = {{"offset_width", "5"}}; // for very large DB files
   if (!db)
     db = new tkrzw::PolyDBM();
@@ -113,10 +113,9 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  string name = DBNAME;
+  auto name = DBNAME;
   if (!dbname.empty()) {
-      auto l = dbname.length();
-      if ((l < 4) or !exts.count(dbname.substr(l - 4)))
+      if (!exts.count(dbname.extension()))
           return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
       name = dbname;
   }

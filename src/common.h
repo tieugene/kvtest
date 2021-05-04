@@ -23,16 +23,17 @@ static uint32_t *rainbow;               ///< random uint32 numbers
 const int RAINBOW_SIZE = 0x10000;       ///< 64K
 // CLI options
 static uint8_t RECS_POW;                ///< log2(Records to create)
-static uint32_t RECS_QTY;               ///< Records to create
 static uint8_t TEST_DELAY = 5;          ///< delay of each test, sec
 static bool verbose = false;            ///< programm verbosity
-static string dbname;                   ///< database file/dir name
+static filesystem::path dbname;         ///< database file/dir name
 // internal system-wide variables
+static uint32_t RECS_QTY;               ///< Records to create
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
 static uint32_t t1, ops1, ops2, ops3, ops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
 static bool can_play = false;
 static chrono::time_point<chrono::steady_clock> T0;
 
+///< Error messages
 const string
   Err_Cannot_Sync = "Cannot sync DB",
   Err_Cannot_Add = "Cannot add record",
@@ -42,6 +43,7 @@ const string
   Err_Not_All_Get = "Not all records got"
 ;
 
+///< Help
 static string_view help_txt = "\
 Usage: [options] <log2(records) (0..31)>\n\
 Options:\n\
@@ -169,11 +171,11 @@ const string opsKops(uint32_t ops) {
     return (ops >= 1000) ? to_string(ops/1000) : to_string(ops/1000.0).substr(0, 5);
 }
 
-uint64_t f_size(string_view path) {
+uint64_t f_size(const filesystem::path &path) {
   return filesystem::file_size(path);
 }
 
-uint64_t d_size(string_view path) {
+uint64_t d_size(const filesystem::path &path) {
   uint64_t retvalue = 0;
   for (filesystem::directory_entry const& entry : filesystem::directory_iterator(path))
     if (entry.is_regular_file())
