@@ -16,6 +16,8 @@
 #include <unistd.h>   // getopt()
 #if defined(__APPLE__)
 #include <mach/mach.h>
+#else
+#include <fstream>
 #endif
 
 using namespace std;

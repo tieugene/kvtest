@@ -38,7 +38,8 @@ bool tx_close(void) {
 
 bool db_open(const filesystem::path &name, uint64_t dbsize) {
   int rc;
-  unsigned int EnvFlags = 0; // MDB_WRITEMAP | MDB_NOMETASYNC | MDB_NOSYNC | MDB_MAPASYNC | MDB_NOLOCK;
+  unsigned int EnvFlags = 0;
+  // unsigned int EnvFlags = MDB_NOLOCK | MDB_MAPASYNC | MDB_WRITEMAP | MDB_NOMETASYNC | MDB_NOSYNC;
 
   if (!filesystem::exists(name))
     if (!filesystem::create_directory(name))
