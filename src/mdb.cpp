@@ -36,17 +36,17 @@ bool tx_close(void) {
   return true;
 }
 
-bool db_open(const filesystem::path &name, uint64_t dbsize) {
+bool db_open(const filesystem::path &name, uint64_t mapsize) {
   int rc;
-  unsigned int EnvFlags = 0;
-  // unsigned int EnvFlags = MDB_NOLOCK | MDB_MAPASYNC | MDB_WRITEMAP | MDB_NOMETASYNC | MDB_NOSYNC;
+  // MDB_WRITEMAP: db size == mapsize
+  unsigned int EnvFlags = MDB_NOMEMINIT | MDB_NORDAHEAD;
 
   if (!filesystem::exists(name))
     if (!filesystem::create_directory(name))
       return false;
   if ((rc = mdb_env_create(&env)))
     return debug_msg(rc, "mdb_env_create");
-  if ((rc = mdb_env_set_mapsize(env, dbsize)))
+  if ((rc = mdb_env_set_mapsize(env, mapsize)))
     return debug_msg(rc, "mdb_env_set_mapsize");
   if ((rc = mdb_env_open(env, name.c_str(), EnvFlags, 0644)))
     return debug_msg(rc, "mdb_env_open");

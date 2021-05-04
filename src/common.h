@@ -143,12 +143,12 @@ int ret_err(const string_view &msg, const int err) {
  * @return Used memory in Kilobytes
  */
 long get_statm(void) {
-    long    total = 0;  // rss, shared, text, lib, data, dt; man proc
+    long    total = 0, rss = 0;  // shared, text, lib, data, dt; man proc
 #if defined (__linux__)
     ifstream statm("/proc/self/statm");
-    statm >> total; // >> rss...
+    statm >> total >> rss; // >> shared...
     statm.close();
-    total *= (sysconf(_SC_PAGE_SIZE) >> 10);  // pages-ze = 4k in F32_x64
+    total = rss * (sysconf(_SC_PAGE_SIZE) >> 10);  // pages-ze = 4k in F32_x64
 #elif defined(__APPLE__)
     struct task_basic_info t_info;
     mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
@@ -261,7 +261,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0;
   KEYTYPE_T k;
 
-  update_mem();
+  ///update_mem();
   if (verbose)
     cerr << "2. Get ... ";
   lets_play(TEST_DELAY);
@@ -277,7 +277,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops2 = all/TEST_DELAY;
   if (verbose)
     cerr << found << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
-  update_mem();
+  ///update_mem();
 }
 
 /**
@@ -288,7 +288,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0, not_recs_qty = ~RECS_QTY;
   KEYTYPE_T k;
 
-  update_mem();
+  ///update_mem();
   if (verbose)
     cerr << "3. Ask ... ";
   lets_play(TEST_DELAY);
@@ -303,7 +303,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops3 = all/TEST_DELAY;
   if (verbose)
     cerr << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops): " << found << " = " << round(100.0*found/all) << "% found" << endl;
-  update_mem();
+  ///update_mem();
 }
 
 /**
@@ -315,7 +315,7 @@ void stage_try(function<bool (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   uint32_t all = 0, found = 0, recs_qty = RECS_QTY;
   KEYTYPE_T k;
 
-  update_mem();
+  ///update_mem();
   if (verbose)
     cerr << "4. Try ... ";
   lets_play(TEST_DELAY);
@@ -339,7 +339,7 @@ void stage_try(function<bool (const KEYTYPE_T &, const uint32_t)> func_rectry) {
 void out_result(uint64_t dbsize=0) {
   cout << "n = " << int(RECS_POW) << ", t = " << t1/1000 << " s, "
        << "size = " << round(dbsize/1048576.0) << " MB, "
-       << "RAM = " << (mem1-mem0)/1024 << " MB, "
+       << "RAM = " << mem1/1024 << " MB, "
        << "Kops:\t" << opsKops(ops1*1000) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H
