@@ -44,9 +44,11 @@ bool db_sync(void) {
   if (verbose)
     cerr << "   Sync... ";
   time_start();
+  //if (db->ShouldBeRebuiltSimple())
+  //  db->Rebuild();
   if (!db->Synchronize(true).IsOK()) {
-      cerr << Err_Cannot_Sync << endl;
-      return false;
+    cerr << Err_Cannot_Sync << endl;
+    return false;
   }
   auto t = time_stop();
   if (verbose)
