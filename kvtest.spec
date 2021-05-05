@@ -1,5 +1,5 @@
 Name:		kvtest
-Version:	0.0.1
+Version:	0.0.2
 Release:	1%{?dist}
 License:	GPLv3
 Summary:	Key-value storages tester
@@ -45,5 +45,8 @@ Set of tools to test different file-based key-value storages.
 
 
 %changelog
+* Wed May 05 2021 TI_Eugene <ti.eugene@gmail.com> 0.0.2-1
+- Version bump
+
 * Sun May 02 2021 TI_Eugene <ti.eugene@gmail.com> 0.0.1-1
 - Initial packaging
