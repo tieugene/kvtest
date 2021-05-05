@@ -9,7 +9,7 @@
 #include "common.h"
 #include <lmdb.h>
 
-const string DBNAME = "kvtest.mdb";
+const filesystem::path DBNAME = "kvtest.mdb";
 const uint64_t MAXMAPSIZE = 0x1000000000; // 64GB
 
 static MDB_env *env;
@@ -36,18 +36,19 @@ bool tx_close(void) {
   return true;
 }
 
-
-bool db_open(const string &name, uint64_t dbsize) {
+bool db_open(const filesystem::path &name, uint64_t mapsize) {
   int rc;
+  // MDB_WRITEMAP: db size == mapsize
+  unsigned int EnvFlags = TUNING ? MDB_NOMEMINIT | MDB_NORDAHEAD : 0;
 
   if (!filesystem::exists(name))
     if (!filesystem::create_directory(name))
       return false;
   if ((rc = mdb_env_create(&env)))
     return debug_msg(rc, "mdb_env_create");
-  if ((rc = mdb_env_set_mapsize(env, dbsize)))
+  if ((rc = mdb_env_set_mapsize(env, mapsize)))
     return debug_msg(rc, "mdb_env_set_mapsize");
-  if ((rc = mdb_env_open(env, name.data(), 0, 0644)))
+  if ((rc = mdb_env_open(env, name.c_str(), EnvFlags, 0644)))
     return debug_msg(rc, "mdb_env_open");
   if (!tx_open())
     return false;
@@ -114,11 +115,7 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  string name = dbname.empty() ? DBNAME : dbname;
-  // ⇃ not works ⇂
-  // auto db_rec_size = sizeof (KEYTYPE_T) + sizeof(uint32_t) + 8; // 36
-  // uint64_t db_size = ((RECS_QTY * db_rec_size / 4080) + 1) * 4096;
-  // 5 = err (1..12)
+  auto name = dbname.empty() ? DBNAME : dbname;
   if (!db_open(name, MAXMAPSIZE))
     return ret_err("Cannot create db", 1);
   // 1. add
@@ -129,7 +126,7 @@ int main(int argc, char *argv[]) {
     return 3;
   if (!db_sync())
     return 5;
-  auto dbsize = f_size(name + "/data.mdb");
+  auto dbsize = f_size(name / "data.mdb");
   if (test_get) {
     if (!tx_open(MDB_RDONLY))
       return 6;

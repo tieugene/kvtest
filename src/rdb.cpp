@@ -5,16 +5,21 @@
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
 
-const string DBNAME("kvtest.rdb");
+const filesystem::path DBNAME("kvtest.rdb");
 
 using namespace ROCKSDB_NAMESPACE;
 
 static DB *db = nullptr;
 
-bool db_open(const string &name, bool create=false) {
+bool db_open(const filesystem::path &name, bool create=false) {
+  // TODO: WAL (.concurrent_prepare, WriteOptions::sync, DBOptions::manual_wal_flush
   Options options;
   options.create_if_missing = create;
-  // options.unordered_write = true
+  if (TUNING) {
+    options.unordered_write = true;
+    options.max_open_files = -1;
+    options.compression = CompressionType::kNoCompression;
+  }
   return DB::Open(options, name, &db).ok();
 }
 
@@ -60,7 +65,7 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  string name = dbname.empty() ? DBNAME : dbname;
+  auto name = dbname.empty() ? DBNAME : dbname;
   if (!db_open(name, true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);

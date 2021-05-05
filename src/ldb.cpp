@@ -4,13 +4,13 @@
 #include "common.h"
 #include <leveldb/db.h>
 
-const string DBNAME("kvtest.ldb");
+const filesystem::path DBNAME("kvtest.ldb");
 
 static leveldb::DB *db = nullptr;
 static leveldb::WriteOptions writeOptions;
 static leveldb::ReadOptions readOptions;
 
-bool db_open(const string &name, bool create=false) {
+bool db_open(const filesystem::path &name, bool create=false) {
   leveldb::Options options;
   options.create_if_missing = create;
   return leveldb::DB::Open(options, name, &db).ok();
@@ -59,7 +59,7 @@ int main(int argc, char *argv[]) {
   // TODO: db->sync();
   if (!cli(argc, argv))
     return 1;
-  string name = dbname.empty() ? DBNAME : dbname;
+  auto name = dbname.empty() ? DBNAME : dbname;
   if (!db_open(name, true))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);

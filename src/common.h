@@ -14,6 +14,11 @@
 #include <chrono>
 #include <thread>
 #include <unistd.h>   // getopt()
+#if defined(__APPLE__)
+#include <mach/mach.h>
+#else
+#include <fstream>
+#endif
 
 using namespace std;
 
@@ -25,14 +30,17 @@ const int RAINBOW_SIZE = 0x10000;       ///< 64K
 static uint8_t RECS_POW;                ///< log2(Records to create)
 static uint32_t RECS_QTY;               ///< Records to create
 static uint8_t TEST_DELAY = 5;          ///< delay of each test, sec
+static bool TUNING = false;
 static bool verbose = false;            ///< programm verbosity
-static string dbname;                   ///< database file/dir name
-// internal system-wide variables
+static filesystem::path dbname;         ///< database file/dir name
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
-static uint32_t t1, ops1, ops2, ops3, ops4;     ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
-static bool can_play = false;
+// internal system-wide variables
+static long mem0 = 0, mem1 = 0;             ///< resident memory used at start and during work (excl. Try())
+static uint32_t t1, ops1, ops2, ops3, ops4; ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
+static bool can_play = false;               ///< timing trigger
 static chrono::time_point<chrono::steady_clock> T0;
 
+///< Error messages
 const string
   Err_Cannot_Sync = "Cannot sync DB",
   Err_Cannot_Add = "Cannot add record",
@@ -42,6 +50,7 @@ const string
   Err_Not_All_Get = "Not all records got"
 ;
 
+///< Help
 static string_view help_txt = "\
 Usage: [options] <log2(records) (0..31)>\n\
 Options:\n\
@@ -49,6 +58,7 @@ Options:\n\
 -f <path> - file/dir name of DB\n\
 -t n      - duration of each test, sec (1..255, default=5)\n\
 -x s      - exclude step[s] (g=Get/a=Ask/t=Try)\n\
+-z        - tuning on\n\
 -v        - verbose on\
 ";
 
@@ -61,7 +71,7 @@ Options:\n\
 bool cli(int argc, char *argv[]) {
   int opt, i;
 
-  while ((opt = getopt(argc, argv, "hf:t:x:v")) != -1) {
+  while ((opt = getopt(argc, argv, "hf:t:x:vz")) != -1) {
     switch (opt) {
       case 'f':   // name
         dbname = optarg;
@@ -92,6 +102,9 @@ bool cli(int argc, char *argv[]) {
         break;
       case 'v':
         verbose = true;
+        break;
+      case 'z':
+        TUNING = true;
         break;
       case 'h':
       case '?':   // can handle optopt
@@ -128,6 +141,32 @@ bool cli(int argc, char *argv[]) {
 int ret_err(const string_view &msg, const int err) {
   cerr << msg << endl;
   return err;
+}
+
+/**
+ * @brief Memory usage
+ * @return Used memory in Kilobytes
+ */
+long get_statm(void) {
+    long    total = 0, rss = 0;  // shared, text, lib, data, dt; man proc
+#if defined (__linux__)
+    ifstream statm("/proc/self/statm");
+    statm >> total >> rss; // >> shared...
+    statm.close();
+    total = rss * (sysconf(_SC_PAGE_SIZE) >> 10);  // pages-ze = 4k in F32_x64
+#elif defined(__APPLE__)
+    struct task_basic_info t_info;
+    mach_msg_type_number_t t_info_count = TASK_BASIC_INFO_COUNT;
+    if (KERN_SUCCESS == task_info(mach_task_self(),
+        TASK_BASIC_INFO, (task_info_t)&t_info,
+        &t_info_count))
+        total = t_info.resident_size >> 10;
+#endif
+    return total;
+}
+
+void update_mem(void) {
+  mem1 = max(mem1, get_statm());
 }
 
 /**
@@ -169,11 +208,11 @@ const string opsKops(uint32_t ops) {
     return (ops >= 1000) ? to_string(ops/1000) : to_string(ops/1000.0).substr(0, 5);
 }
 
-uint64_t f_size(string_view path) {
+uint64_t f_size(const filesystem::path &path) {
   return filesystem::file_size(path);
 }
 
-uint64_t d_size(string_view path) {
+uint64_t d_size(const filesystem::path &path) {
   uint64_t retvalue = 0;
   for (filesystem::directory_entry const& entry : filesystem::directory_iterator(path))
     if (entry.is_regular_file())
@@ -203,8 +242,9 @@ void get_key(const uint32_t v, KEYTYPE_T &dst) {
 void stage_add(function<void (const KEYTYPE_T &, const uint32_t)> func_recadd) {
   KEYTYPE_T k;
 
+  mem0 = get_statm();
   if (verbose)
-    cerr << "Playing 2**" << int(RECS_POW) <<" = " << RECS_QTY << " records:" << endl
+    cerr << "Playing 2^" << int(RECS_POW) <<" = " << RECS_QTY << " records (tunig: " << (TUNING ? "ON" : "OFF") << "):" << endl
          << "1. Add ... ";
   time_start();
   for (uint32_t v = 0; v < RECS_QTY; v++) {
@@ -215,6 +255,7 @@ void stage_add(function<void (const KEYTYPE_T &, const uint32_t)> func_recadd) {
   ops1 = (t1) ? RECS_QTY/t1 : 0;
   if (verbose)
     cerr << RECS_QTY << " @ " << t1 << " ms (" << opsKops(ops1*1000) << " Kops)" << endl;
+  update_mem();
 }
 
 /**
@@ -225,6 +266,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0;
   KEYTYPE_T k;
 
+  ///update_mem();
   if (verbose)
     cerr << "2. Get ... ";
   lets_play(TEST_DELAY);
@@ -240,6 +282,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops2 = all/TEST_DELAY;
   if (verbose)
     cerr << found << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
+  ///update_mem();
 }
 
 /**
@@ -250,6 +293,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0, not_recs_qty = ~RECS_QTY;
   KEYTYPE_T k;
 
+  ///update_mem();
   if (verbose)
     cerr << "3. Ask ... ";
   lets_play(TEST_DELAY);
@@ -264,6 +308,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops3 = all/TEST_DELAY;
   if (verbose)
     cerr << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops): " << found << " = " << round(100.0*found/all) << "% found" << endl;
+  ///update_mem();
 }
 
 /**
@@ -275,6 +320,7 @@ void stage_try(function<bool (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   uint32_t all = 0, found = 0, recs_qty = RECS_QTY;
   KEYTYPE_T k;
 
+  ///update_mem();
   if (verbose)
     cerr << "4. Try ... ";
   lets_play(TEST_DELAY);
@@ -296,9 +342,9 @@ void stage_try(function<bool (const KEYTYPE_T &, const uint32_t)> func_rectry) {
  * @brief Output test results to stdout
  */
 void out_result(uint64_t dbsize=0) {
-  cout << "n = " << int(RECS_POW) << ", t = " << t1/1000 << " s, ";
-  if (dbsize)
-    cout << "size = " << round(dbsize/1048576.0) << " MB, ";
-  cout << "Kops:\t" << opsKops(ops1*1000) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
+  cout << "n = " << int(RECS_POW) << ", t = " << t1/1000 << " s, "
+       << "size = " << round(dbsize/1048576.0) << " MB, "
+       << "RAM = " << mem1/1024 << " MB, "
+       << "Kops:\t" << opsKops(ops1*1000) << "\t" << opsKops(ops2) << "\t" << opsKops(ops3) << "\t" << opsKops(ops4) << endl;
 }
 #endif // COMMON_H

@@ -15,7 +15,7 @@ const map<string, DBTYPE> exts = {  ///< filename extensions allowable
 };
 //{".bdq", DB_QUEUE},
 //{".bdr", DB_RECNO},
-const string DBNAME("kvtest.bdh");  ///< default filename
+const filesystem::path DBNAME("kvtest.bdh");  ///< default filename
 const string help = "\
 .bdh: DB_HASH\n\
 .bdt: DB_BTREE\
@@ -29,11 +29,11 @@ static Db *db = nullptr;            ///< DB handler
  * @param type Database type
  * @return true on success
  */
-bool db_open(const string_view name, const DBTYPE type) {
+bool db_open(const filesystem::path name, const DBTYPE type) {
   // TODO: use DB_UNKNOWN on reopening to detect type
   if (!db)
     db = new Db(nullptr, 0);
-  return db->open(nullptr, name.cbegin(), nullptr, type, DB_CREATE|DB_TRUNCATE, 0644) == 0;
+  return db->open(nullptr, name.c_str(), nullptr, type, DB_CREATE|DB_TRUNCATE, 0644) == 0;
 }
 
 /**
@@ -104,15 +104,14 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
  * @return 0 if OK
  */
 int main(int argc, char *argv[]) {
-  string name = DBNAME;
+  auto name = DBNAME;
   DBTYPE type = DB_HASH;
   auto search = exts.end();
 
   if (!cli(argc, argv))
     return 1;
   if (!dbname.empty()) {
-    auto l = dbname.length();
-    if ((l >= 4) and ((search = exts.find(dbname.substr(l - 4))) != exts.end())) {
+    if ((search = exts.find(dbname.extension())) != exts.end()) {
           name = dbname;
           type = search->second;
     } else

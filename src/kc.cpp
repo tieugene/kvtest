@@ -7,7 +7,7 @@
 #include <kcpolydb.h>
 
 const set<string> exts = {".kch", ".kct", ".kcd", ".kcf"};  ///< filename extensions allowable
-const string DBNAME("kvtest.kch");    ///< default filename
+const filesystem::path DBNAME("kvtest.kch");    ///< default filename
 const string help = "\
 .kch: HashDB (file hash)\n\
 .kct: TreeDB (file tree)\n\
@@ -22,7 +22,7 @@ static kyotocabinet::PolyDB *db = nullptr;    ///< DB handler
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const string &name) {
+bool db_open(const filesystem::path &name) {
   if (!db)
     db = new kyotocabinet::PolyDB();
   return ((db) and (db->open(name, kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
@@ -97,10 +97,9 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  string name = DBNAME;
+  auto name = DBNAME;
   if (!dbname.empty()) {
-      auto l = dbname.length();
-      if ((l < 4) or !exts.count(dbname.substr(l - 4)))
+      if (!exts.count(dbname.extension()))
           return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
       name = dbname;
   }
