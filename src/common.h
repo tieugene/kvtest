@@ -28,8 +28,9 @@ static uint32_t *rainbow;               ///< random uint32 numbers
 const int RAINBOW_SIZE = 0x10000;       ///< 64K
 // CLI options
 static uint8_t RECS_POW;                ///< log2(Records to create)
-static uint32_t RECS_QTY;                   ///< Records to create
+static uint32_t RECS_QTY;               ///< Records to create
 static uint8_t TEST_DELAY = 5;          ///< delay of each test, sec
+static bool TUNING = false;
 static bool verbose = false;            ///< programm verbosity
 static filesystem::path dbname;         ///< database file/dir name
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
@@ -57,6 +58,7 @@ Options:\n\
 -f <path> - file/dir name of DB\n\
 -t n      - duration of each test, sec (1..255, default=5)\n\
 -x s      - exclude step[s] (g=Get/a=Ask/t=Try)\n\
+-z        - tuning on\n\
 -v        - verbose on\
 ";
 
@@ -69,7 +71,7 @@ Options:\n\
 bool cli(int argc, char *argv[]) {
   int opt, i;
 
-  while ((opt = getopt(argc, argv, "hf:t:x:v")) != -1) {
+  while ((opt = getopt(argc, argv, "hf:t:x:vz")) != -1) {
     switch (opt) {
       case 'f':   // name
         dbname = optarg;
@@ -100,6 +102,9 @@ bool cli(int argc, char *argv[]) {
         break;
       case 'v':
         verbose = true;
+        break;
+      case 'z':
+        TUNING = true;
         break;
       case 'h':
       case '?':   // can handle optopt
@@ -239,7 +244,7 @@ void stage_add(function<void (const KEYTYPE_T &, const uint32_t)> func_recadd) {
 
   mem0 = get_statm();
   if (verbose)
-    cerr << "Playing 2**" << int(RECS_POW) <<" = " << RECS_QTY << " records:" << endl
+    cerr << "Playing 2^" << int(RECS_POW) <<" = " << RECS_QTY << " records (tunig: " << (TUNING ? "ON" : "OFF") << "):" << endl
          << "1. Add ... ";
   time_start();
   for (uint32_t v = 0; v < RECS_QTY; v++) {

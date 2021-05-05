@@ -14,7 +14,15 @@ static DB *db = nullptr;
 bool db_open(const filesystem::path &name, bool create=false) {
   Options options;
   options.create_if_missing = create;
-  // options.unordered_write = true
+  if (TUNING) {
+    options.unordered_write = true;
+    options.max_open_files = -1;
+    options.compression = CompressionType::kNoCompression;
+    // WAL:
+    // DBOptions.concurrent_prepare
+    // WriteOptions::sync
+    // DBOptions::manual_wal_flush
+  }
   return DB::Open(options, name, &db).ok();
 }
 
