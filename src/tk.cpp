@@ -24,8 +24,12 @@ static tkrzw::PolyDBM *db = nullptr;    ///< DB handler
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const filesystem::path &name) {
-  const map<string, string> tuning_params = {{"offset_width", "5"}}; // for very large DB files
+bool db_open(const filesystem::path &name, uint32_t recs) {
+  const map<string, string> tuning_params = { // for very large DB files
+    {"offset_width", "5"},
+    {"align_pow", "4"},
+    {"num_buckets", to_string(recs)}
+  };
   if (!db)
     db = new tkrzw::PolyDBM();
   return ((db) and db->OpenAdvanced(name, true, tkrzw::File::OPEN_TRUNCATE, tuning_params).IsOK());
@@ -119,7 +123,7 @@ int main(int argc, char *argv[]) {
           return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
       name = dbname;
   }
-  if (!db_open(name))
+  if (!db_open(name, RECS_QTY))
     return ret_err("Cannot create db", 1);
   stage_add(RecordAdd);
   if (!db_sync())

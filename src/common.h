@@ -28,13 +28,13 @@ static uint32_t *rainbow;               ///< random uint32 numbers
 const int RAINBOW_SIZE = 0x10000;       ///< 64K
 // CLI options
 static uint8_t RECS_POW;                ///< log2(Records to create)
+static uint32_t RECS_QTY;                   ///< Records to create
 static uint8_t TEST_DELAY = 5;          ///< delay of each test, sec
 static bool verbose = false;            ///< programm verbosity
 static filesystem::path dbname;         ///< database file/dir name
 static bool test_get = true, test_ask = true, test_try = true;  ///< Stages to execute
 // internal system-wide variables
 static long mem0 = 0, mem1 = 0;             ///< resident memory used at start and during work (excl. Try())
-static uint32_t RECS_QTY;                   ///< Records to create
 static uint32_t t1, ops1, ops2, ops3, ops4; ///< Results: times (ms) and speeds (kilo-operations per second) for all stages
 static bool can_play = false;               ///< timing trigger
 static chrono::time_point<chrono::steady_clock> T0;
@@ -155,7 +155,7 @@ long get_statm(void) {
     if (KERN_SUCCESS == task_info(mach_task_self(),
         TASK_BASIC_INFO, (task_info_t)&t_info,
         &t_info_count))
-        total = t_info.virtual_size >> 10;
+        total = t_info.resident_size >> 10;
 #endif
     return total;
 }
