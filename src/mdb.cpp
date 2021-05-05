@@ -39,7 +39,7 @@ bool tx_close(void) {
 bool db_open(const filesystem::path &name, uint64_t mapsize) {
   int rc;
   // MDB_WRITEMAP: db size == mapsize
-  unsigned int EnvFlags = MDB_NOMEMINIT | MDB_NORDAHEAD;
+  unsigned int EnvFlags = MDB_NOMEMINIT | MDB_NORDAHEAD;  // tuning (light)
 
   if (!filesystem::exists(name))
     if (!filesystem::create_directory(name))

@@ -25,10 +25,10 @@ static tkrzw::PolyDBM *db = nullptr;    ///< DB handler
  * @return true on success
  */
 bool db_open(const filesystem::path &name, uint32_t recs) {
-  const map<string, string> tuning_params = { // for very large DB files
-    {"offset_width", "5"},
-    {"align_pow", "4"},
-    {"num_buckets", to_string(recs)}
+  const map<string, string> tuning_params = { // tunig
+    {"offset_width", "5"},            // mandatory for large DB files: up to // Up to 2^(8*5) = 1TB
+    {"align_pow", "3"},               // align on 2^3=8 bytes
+    {"num_buckets", to_string(recs)}  // buckets == records
   };
   if (!db)
     db = new tkrzw::PolyDBM();
