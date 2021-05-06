@@ -99,6 +99,10 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
+  auto ram = get_RAM();
+  auto buf = long(round(ram*0.75))/(1<<20);
+  cerr << "RAM: " << ram << ", will use: " << buf << endl;
+  return 0;
   auto name = dbname.empty() ? DBNAME : dbname;
   db_open(name);
   stage_add(RecordAdd);

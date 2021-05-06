@@ -145,6 +145,28 @@ int ret_err(const string_view &msg, const int err) {
   return err;
 }
 
+unsigned long get_RAM(void) {
+  unsigned long ram = 0;
+#if defined (__linux__)
+  string token;
+  ifstream meminfo("/proc/meminfo");
+  while(meminfo >> token) {
+      if(token == "MemTotal:") {  // kB
+          unsigned long mem;
+          if(meminfo >> mem)
+              ram = mem;
+          else
+              ram = 0;
+      }
+      // ignore rest of the line
+      meminfo.ignore(numeric_limits<std::streamsize>::max(), '\n');
+  }
+#elif defined(__APPLE__)
+  ram = 4;  // dummy
+#endif
+  return ram;
+}
+
 /**
  * @brief Memory usage
  * @return Used memory in Kilobytes
