@@ -19,13 +19,15 @@ static Db *db = nullptr;                      ///< DB handler
  * @return true on success
  */
 void db_open(const filesystem::path name) {
-  // TODO: use DB_UNKNOWN on reopening to detect type
   if (!db)
     db = new Db(nullptr, 0);
   if (!db)
     throw Err_Cannot_New;
-  if (TUNING)
-    db->set_cachesize(1, 0, 0);   // TODO: free RAM -25%
+  if (TUNING) {
+    auto cache = long(round(get_RAM()*0.75))/(1<<20); // 3.9GB=>2, 31GB=>23, 256GB=>188
+    if (cache)
+      db->set_cachesize(cache, 0, 0);
+  }
   if (db->open(nullptr, name.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0644))
     throw Err_Cannot_Create;
 }
@@ -99,10 +101,6 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  auto ram = get_RAM();
-  auto buf = long(round(ram*0.75))/(1<<20);
-  cerr << "RAM: " << ram << ", will use: " << buf << endl;
-  return 0;
   auto name = dbname.empty() ? DBNAME : dbname;
   db_open(name);
   stage_add(RecordAdd);
