@@ -42,6 +42,8 @@ static chrono::time_point<chrono::steady_clock> T0;
 
 ///< Error messages
 const string
+  Err_Cannot_New = "Cannot 'new' DB",
+  Err_Cannot_Create = "Cannot create DB",
   Err_Cannot_Sync = "Cannot sync DB",
   Err_Cannot_Add = "Cannot add record",
   Err_Cannot_Get = "Cannot get record",
@@ -266,7 +268,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0;
   KEYTYPE_T k;
 
-  ///update_mem();
+  update_mem();
   if (verbose)
     cerr << "2. Get ... ";
   lets_play(TEST_DELAY);
@@ -282,7 +284,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops2 = all/TEST_DELAY;
   if (verbose)
     cerr << found << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;
-  ///update_mem();
+  update_mem();
 }
 
 /**
@@ -293,7 +295,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   uint32_t all = 0, found = 0, not_recs_qty = ~RECS_QTY;
   KEYTYPE_T k;
 
-  ///update_mem();
+  update_mem();
   if (verbose)
     cerr << "3. Ask ... ";
   lets_play(TEST_DELAY);
@@ -308,7 +310,7 @@ void stage_ask(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
   ops3 = all/TEST_DELAY;
   if (verbose)
     cerr << all << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops3) << " Kops): " << found << " = " << round(100.0*found/all) << "% found" << endl;
-  ///update_mem();
+  update_mem();
 }
 
 /**
@@ -320,7 +322,7 @@ void stage_try(function<bool (const KEYTYPE_T &, const uint32_t)> func_rectry) {
   uint32_t all = 0, found = 0, recs_qty = RECS_QTY;
   KEYTYPE_T k;
 
-  ///update_mem();
+  update_mem();
   if (verbose)
     cerr << "4. Try ... ";
   lets_play(TEST_DELAY);

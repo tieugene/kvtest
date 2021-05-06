@@ -14,11 +14,18 @@ static kyotocabinet::HashDB *db = nullptr;    ///< DB handler
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const filesystem::path &name) {
+void db_open(const filesystem::path &name, uint32_t recs) {
   // TODO: add tunings (e.g. tune_map, tune_buckets)
   if (!db)
     db = new kyotocabinet::HashDB();
-  return ((db) and (db->open(name, kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE | kyotocabinet::HashDB::OTRUNCATE)));
+  if (!db)
+    throw Err_Cannot_New;
+  if (TUNING) {
+    if (!db->tune_buckets(recs))
+      throw "Cannot tune DB";
+  }
+  if (!db->open(name, kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE | kyotocabinet::HashDB::OTRUNCATE))
+    throw Err_Cannot_Create;
 }
 
 /**
@@ -91,8 +98,7 @@ int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
   auto name = dbname.empty() ? DBNAME : dbname;
-  if (!db_open(name))
-    return ret_err("Cannot create db", 1);
+  db_open(name, RECS_QTY);
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;

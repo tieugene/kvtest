@@ -18,11 +18,16 @@ static Db *db = nullptr;                      ///< DB handler
  * @param type Database type
  * @return true on success
  */
-bool db_open(const filesystem::path name) {
+void db_open(const filesystem::path name) {
   // TODO: use DB_UNKNOWN on reopening to detect type
   if (!db)
     db = new Db(nullptr, 0);
-  return db->open(nullptr, name.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0644) == 0;
+  if (!db)
+    throw Err_Cannot_New;
+  if (TUNING)
+    db->set_cachesize(1, 0, 0);   // TODO: free RAM -25%
+  if (db->open(nullptr, name.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0644))
+    throw Err_Cannot_Create;
 }
 
 /**
@@ -95,8 +100,7 @@ int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
   auto name = dbname.empty() ? DBNAME : dbname;
-  if (!db_open(name))
-    return ret_err("Cannot create db", 1);
+  db_open(name);
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;

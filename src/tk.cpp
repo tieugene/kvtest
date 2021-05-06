@@ -17,18 +17,22 @@ static tkrzw::HashDBM *db = nullptr;          ///< DB handler
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const filesystem::path &name, uint32_t recs) {
+void db_open(const filesystem::path &name, uint32_t recs) {
   tkrzw::HashDBM::TuningParameters tuning_params;
   tuning_params.offset_width = 5;     // mandatory for large DB files: up to 2^(8*5)=1TB
   if (TUNING) {
-    tuning_params.align_pow = 3;      //align on 2^3=8 bytes
+    // TODO: find async write
+    //tuning_params.align_pow = 2;      //align on 2^3=8 bytes
     tuning_params.num_buckets = recs; // buckets == records
     tuning_params.update_mode = tkrzw::HashDBM::UpdateMode::UPDATE_APPENDING;
     //tuning_params.lock_mem_buckets = true; // dangerous
   };
   if (!db)
     db = new tkrzw::HashDBM();
-  return ((db) and db->OpenAdvanced(name, true, tkrzw::File::OPEN_TRUNCATE, tuning_params).IsOK());
+  if (!db)
+    throw Err_Cannot_New;
+  if (!db->OpenAdvanced(name, true, tkrzw::File::OPEN_TRUNCATE, tuning_params).IsOK())
+    throw Err_Cannot_Create;
 }
 
 /**
@@ -116,8 +120,7 @@ int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
   auto name = dbname.empty() ? DBNAME : dbname;
-  if (!db_open(name, RECS_QTY))
-    return ret_err("Cannot create db", 1);
+  db_open(name, RECS_QTY);
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;
