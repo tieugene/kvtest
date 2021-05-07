@@ -15,7 +15,6 @@ static kyotocabinet::HashDB *db = nullptr;    ///< DB handler
  * @return true on success
  */
 void db_open(const filesystem::path &name, uint32_t recs) {
-  // TODO: add tunings (e.g. tune_map, tune_buckets)
   if (!db)
     db = new kyotocabinet::HashDB();
   if (!db)
