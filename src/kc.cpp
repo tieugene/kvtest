@@ -22,6 +22,7 @@ void db_open(const filesystem::path &name, uint32_t recs) {
   if (TUNING) {
     if (!db->tune_buckets(recs))  // must be _before_ creating DB
       throw "Cannot tune DB";
+    // db->tune_map(round(get_RAM()*0.5))) - danger
   }
   if (!db->open(name, kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE | kyotocabinet::HashDB::OTRUNCATE))
     throw Err_Cannot_Create;
