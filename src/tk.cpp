@@ -30,9 +30,9 @@ void db_open(const filesystem::path &name, uint32_t recs) {
   if (!db)
     db = new tkrzw::HashDBM();
   if (!db)
-    throw Err_Cannot_New;
+    throw KVTError(Err_Cannot_New);
   if (!db->OpenAdvanced(name, true, tkrzw::File::OPEN_TRUNCATE, tuning_params).IsOK())
-    throw Err_Cannot_Create;
+    throw KVTError(Err_Cannot_Create);
 }
 
 /**
@@ -63,7 +63,7 @@ bool db_sync(void) {
  */
 void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   if (!db->Set(string_view((const char *) &k, sizeof(KEYTYPE_T)), string_view((const char *)&v, sizeof(uint32_t))).IsOK())
-    throw Err_Cannot_Add;
+    throw KVTError(Err_Cannot_Add);
 }
 
 /**
@@ -80,12 +80,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (status == tkrzw::Status::NOT_FOUND_ERROR)
     return false;
   else
-    throw status.GetMessage();
+    throw KVTError(status.GetMessage());
 }
 
 /**
@@ -104,10 +104,10 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else
-    throw s.GetMessage();
+    throw KVTError(s.GetMessage());
 }
 
 /**

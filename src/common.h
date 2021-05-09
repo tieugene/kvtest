@@ -40,10 +40,16 @@ static uint32_t t1, ops1, ops2, ops3, ops4; ///< Results: times (ms) and speeds 
 static bool can_play = false;               ///< timing trigger
 static chrono::time_point<chrono::steady_clock> T0;
 
+class KVTError : public runtime_error {
+public:
+  KVTError(const string& msg = "") : runtime_error(msg) {}
+};
+
 ///< Error messages
 const string
   Err_Cannot_New = "Cannot 'new' DB",
   Err_Cannot_Create = "Cannot create DB",
+  Err_Cannot_Tune = "Cannot tune DB",
   Err_Cannot_Sync = "Cannot sync DB",
   Err_Cannot_Add = "Cannot add record",
   Err_Cannot_Get = "Cannot get record",
@@ -302,7 +308,7 @@ void stage_get(function<bool (const KEYTYPE_T &, const uint32_t)> func_recget) {
     all++;
   }
   if (found != all)
-    throw Err_Not_All_Get;
+    throw KVTError(Err_Not_All_Get);
   ops2 = all/TEST_DELAY;
   if (verbose)
     cerr << found << " @ " << int(TEST_DELAY) << " s (" << opsKops(ops2) << " Kops)" << endl;

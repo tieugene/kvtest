@@ -22,14 +22,14 @@ void db_open(const filesystem::path name) {
   if (!db)
     db = new Db(nullptr, 0);
   if (!db)
-    throw Err_Cannot_New;
+    throw KVTError(Err_Cannot_New);
   if (TUNING) {
     auto cache = long(round(get_RAM()*0.75))/(1<<20); // 3.9GB=>2, 31GB=>23, 256GB=>188
     if (cache)
       db->set_cachesize(cache, 0, 0);
   }
   if (db->open(nullptr, name.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0644))
-    throw Err_Cannot_Create;
+    throw KVTError(Err_Cannot_Create);
 }
 
 /**
@@ -58,7 +58,7 @@ bool db_sync(void) {
 void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   Dbt key((void *) &k, sizeof(KEYTYPE_T)), val((void *) &v, sizeof(uint32_t));
   if (db->put(nullptr, &key, &val, DB_NOOVERWRITE))
-    throw Err_Cannot_Add;
+    throw KVTError(Err_Cannot_Add);
 }
 
 /**
@@ -74,12 +74,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.get_data()) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (s == DB_NOTFOUND)
     return false;
   else
-    throw Err_Cannot_Get;
+    throw KVTError(Err_Cannot_Get);
 }
 
 /**

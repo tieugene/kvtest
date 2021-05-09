@@ -33,7 +33,7 @@ bool db_sync(void) {
 
 void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   if (!db->Put(writeOptions, string((const char *) &k, sizeof(k)), string((const char *)&v, sizeof(v))).ok())
-    throw Err_Cannot_Add;
+    throw KVTError(Err_Cannot_Add);
 }
 
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
@@ -43,12 +43,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (s.IsNotFound())
     return false;
   else
-    throw Err_Cannot_Get;
+    throw KVTError(Err_Cannot_Get);
 }
 
 bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
