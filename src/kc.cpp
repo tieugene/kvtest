@@ -4,28 +4,28 @@
 
 #ifdef USE_KC
 #include "common.h"
-#include <kcpolydb.h>
+#include <kchashdb.h>
 
-const set<string> exts = {".kch", ".kct", ".kcd", ".kcf"};  ///< filename extensions allowable
-const filesystem::path DBNAME("kvtest.kch");    ///< default filename
-const string help = "\
-.kch: HashDB (file hash)\n\
-.kct: TreeDB (file tree)\n\
-.kcd: DirDB (directory hash)\n\
-.kcf: ForestDB (directory tree)\
-";
-
-static kyotocabinet::PolyDB *db = nullptr;    ///< DB handler
+const filesystem::path DBNAME("kvtest.kch");  ///< default filename
+static kyotocabinet::HashDB *db = nullptr;    ///< DB handler
 
 /**
  * @brief Open/create DB
  * @param name Database filename
  * @return true on success
  */
-bool db_open(const filesystem::path &name) {
+void db_open(const filesystem::path &name, uint32_t recs) {
   if (!db)
-    db = new kyotocabinet::PolyDB();
-  return ((db) and (db->open(name, kyotocabinet::PolyDB::OWRITER | kyotocabinet::PolyDB::OCREATE | kyotocabinet::PolyDB::OTRUNCATE)));
+    db = new kyotocabinet::HashDB();
+  if (!db)
+    throw Err_Cannot_New;
+  if (TUNING) {
+    if (!db->tune_buckets(recs))  // must be _before_ creating DB
+      throw "Cannot tune DB";
+    // db->tune_map(round(get_RAM()*0.5))) - danger
+  }
+  if (!db->open(name, kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE | kyotocabinet::HashDB::OTRUNCATE))
+    throw Err_Cannot_Create;
 }
 
 /**
@@ -97,14 +97,8 @@ bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
 int main(int argc, char *argv[]) {
   if (!cli(argc, argv))
     return 1;
-  auto name = DBNAME;
-  if (!dbname.empty()) {
-      if (!exts.count(dbname.extension()))
-          return ret_err("Filename must be *.ext, where 'ext' can be:\n" + help, 2);
-      name = dbname;
-  }
-  if (!db_open(name))
-    return ret_err("Cannot create db", 1);
+  auto name = dbname.empty() ? DBNAME : dbname;
+  db_open(name, RECS_QTY);
   stage_add(RecordAdd);
   if (!db_sync())
     return 2;
