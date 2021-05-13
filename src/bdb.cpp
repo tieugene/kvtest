@@ -3,11 +3,13 @@
  */
 
 #ifdef USE_BDB
-#include "common.h"
+
+#include <iostream>
 #include <string_view>
-#include <map>
 #include <iterator>
+#include <map>
 #include <db_cxx.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.bdh");  ///< default filename
 static Db *db = nullptr;                      ///< DB handler

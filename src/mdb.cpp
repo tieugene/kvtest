@@ -5,9 +5,10 @@
  */
 
 #ifdef USE_MDB
-#include <filesystem>
-#include "common.h"
+
+#include <iostream>
 #include <lmdb.h>
+#include "common.h"
 
 const filesystem::path DBNAME = "kvtest.mdb";
 const uint64_t MAXMAPSIZE = 0x1000000000; // 64GB

@@ -3,8 +3,10 @@
  */
 
 #ifdef USE_KC
-#include "common.h"
+
+#include <iostream>
 #include <kchashdb.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.kch");  ///< default filename
 static kyotocabinet::HashDB *db = nullptr;    ///< DB handler

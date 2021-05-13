@@ -1,9 +1,11 @@
 // RocksDB
 
 #ifdef USE_RDB
-#include "common.h"
+
+#include <iostream>
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.rdb");
 
@@ -29,12 +31,12 @@ bool db_open(const filesystem::path &name, bool create=false) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync... ";
+    std::cerr << "   Sync... ";
   time_start();
   delete db;
   auto t = time_stop();
   if (verbose)
-    cerr << t << " ms" << endl;
+    std::cerr << t << " ms" << endl;
   return true;
 }
 

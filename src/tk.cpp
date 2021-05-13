@@ -3,11 +3,13 @@
  */
 
 #ifdef USE_TK
-#include "common.h"
+
+#include <iostream>
 #include <string_view>
 #include <set>
 #include <map>
 #include <tkrzw_dbm_hash.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.tkh");  ///< default filename
 static tkrzw::HashDBM *db = nullptr;          ///< DB handler
