@@ -3,10 +3,6 @@
  */
 
 #include <iostream>
-#include <cstdlib>
-#include <array>
-#include <filesystem>
-#include <functional>
 #include <cmath>     // round()
 #include <chrono>
 #include <thread>
@@ -16,7 +12,6 @@
 #else
 #include <fstream>
 #endif
-
 #include "common.h"
 
 using namespace std;

@@ -7,14 +7,8 @@
 
 #include <array>
 #include <filesystem>
-/*
-#include <iostream>
-#include <cstdlib>
 #include <functional>
-#include <cmath>     // round()
-#include <chrono>
-#include <thread>
-*/
+
 using namespace std;
 
 // CLI options

@@ -8,6 +8,7 @@
 #include <string_view>
 #include <iterator>
 #include <map>
+#include <cmath>
 #include <db_cxx.h>
 #include "common.h"
 
