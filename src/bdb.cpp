@@ -27,9 +27,14 @@ void db_open(const filesystem::path name) {
   if (!db)
     throw KVTError(Err_Cannot_New);
   if (TUNING) {
+    if (db->set_h_ffactor(112))
+      throw KVTError("Cannot set_h_ffactor");
     auto cache = long(round(get_RAM()*0.75))/(1<<20); // 3.9GB=>2, 31GB=>23, 256GB=>188
-    if (cache)
+    if (cache) {
       db->set_cachesize(cache, 0, 0);
+      if (db->set_h_nelem(RECS_QTY))
+        throw KVTError("Cannot set_h_nelem");
+    }
   }
   if (db->open(nullptr, name.c_str(), nullptr, DB_HASH, DB_CREATE|DB_TRUNCATE, 0644))
     throw KVTError(Err_Cannot_Create);
