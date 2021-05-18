@@ -3,8 +3,10 @@
  */
 
 #ifdef USE_KC
-#include "common.h"
+
+#include <iostream>
 #include <kchashdb.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.kch");  ///< default filename
 static kyotocabinet::HashDB *db = nullptr;    ///< DB handler
@@ -18,14 +20,14 @@ void db_open(const filesystem::path &name, uint32_t recs) {
   if (!db)
     db = new kyotocabinet::HashDB();
   if (!db)
-    throw Err_Cannot_New;
+    throw KVTError(Err_Cannot_New);
   if (TUNING) {
     if (!db->tune_buckets(recs))  // must be _before_ creating DB
-      throw "Cannot tune DB";
+      throw KVTError(Err_Cannot_Tune);
     // db->tune_map(round(get_RAM()*0.5))) - danger
   }
   if (!db->open(name, kyotocabinet::HashDB::OWRITER | kyotocabinet::HashDB::OCREATE | kyotocabinet::HashDB::OTRUNCATE))
-    throw Err_Cannot_Create;
+    throw KVTError(Err_Cannot_Create);
 }
 
 /**
@@ -53,7 +55,7 @@ bool db_sync(void) {
  */
 void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   if (!db->add((const char *) &k, sizeof(KEYTYPE_T), (const char *)&v, sizeof(uint32_t)))
-    throw Err_Cannot_Add;
+    throw KVTError(Err_Cannot_Add);
 }
 
 /**
@@ -69,12 +71,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (val == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (s == -1)
     return false;
   else
-    throw Err_Cannot_Get;
+    throw KVTError(Err_Cannot_Get);
 }
 
 /**

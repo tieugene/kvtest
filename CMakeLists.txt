@@ -8,6 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include_directories(src)
 find_package(PkgConfig REQUIRED)
 
+add_library(common OBJECT src/common.cpp)
+
 option(USE_BDB "BerkeleyDB" ON)
 option(USE_LDB "LevelDB" ON)
 option(USE_RDB "RocksDB" ON)

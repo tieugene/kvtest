@@ -1,9 +1,11 @@
 // RocksDB
 
 #ifdef USE_RDB
-#include "common.h"
+
+#include <iostream>
 #include <rocksdb/db.h>
 #include <rocksdb/options.h>
+#include "common.h"
 
 const filesystem::path DBNAME("kvtest.rdb");
 
@@ -29,18 +31,18 @@ bool db_open(const filesystem::path &name, bool create=false) {
  */
 bool db_sync(void) {
   if (verbose)
-    cerr << "   Sync... ";
+    std::cerr << "   Sync... ";
   time_start();
   delete db;
   auto t = time_stop();
   if (verbose)
-    cerr << t << " ms" << endl;
+    std::cerr << t << " ms" << endl;
   return true;
 }
 
 void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   if (!db->Put(WriteOptions(), string_view((const char *) &k, sizeof(k)), string_view((const char *)&v, sizeof(v))).ok())
-    throw Err_Cannot_Add;
+    throw KVTError(Err_Cannot_Add);
 }
 
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
@@ -50,12 +52,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.data()) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (s.IsNotFound())
     return false;
   else
-    throw Err_Cannot_Get;
+    throw KVTError(Err_Cannot_Get);
 }
 
 bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {

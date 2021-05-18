@@ -5,9 +5,10 @@
  */
 
 #ifdef USE_MDB
-#include <filesystem>
-#include "common.h"
+
+#include <iostream>
 #include <lmdb.h>
+#include "common.h"
 
 const filesystem::path DBNAME = "kvtest.mdb";
 const uint64_t MAXMAPSIZE = 0x1000000000; // 64GB
@@ -88,7 +89,7 @@ void RecordAdd(const KEYTYPE_T &k, const uint32_t v) {
   val.mv_size = sizeof(v);
   val.mv_data = (void *) &v;
   if ((rc = mdb_put(txn, db, &key, &val, MDB_NOOVERWRITE)) != 0)
-    throw mdb_strerror(rc);
+    throw KVTError(mdb_strerror(rc));
 }
 
 bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
@@ -100,12 +101,12 @@ bool RecordGet(const KEYTYPE_T &k, const uint32_t v) {
     if (*((uint32_t *) val.mv_data) == v)
       return true;
     else
-      throw Err_Unexpected_Value;
+      throw KVTError(Err_Unexpected_Value);
   }
   else if (rc == MDB_NOTFOUND)
     return false;
   else
-    throw mdb_strerror(rc);
+    throw KVTError(mdb_strerror(rc));
 }
 
 bool RecordTry(const KEYTYPE_T &k, const uint32_t v) {
